@@ -1,0 +1,397 @@
+import React, { useEffect, useState } from "react";
+import classes from './Request_page.module.css';
+import axios from "axios";
+import Modal from '../Modal/Modal';
+import DropdownMenu from '../DropdownMenu/DropdownMenu';
+import AddCounterparty from "../AddCounterparty/AddCounterparty";
+import CreateInvoiceForm from '../CreateInvoiceForm/CreateInvoiceForm';
+import CreateInvoiceFormDogovor from '../CreateInvoiceFormDogovor/CreateInvoiceFormDogovor';
+import DocMenu from "../DocMenu/DocMenu";
+
+function Request_page({ children, ...props }) {
+    const [requests, setRequests] = useState([]);
+
+    const [isCounterpartyModalOpen, setIsCounterpartyModalOpen] = useState(false);
+    const [isInvoiceDogovorModalOpen, setIsInvoiceDogovorModalOpen] = useState(false);
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+    const [isInvoiceModalDogovorOpen, setIsInvoiceModalDogovorOpen] = useState(false);
+    const [currentContract, setCurrentContract] = useState(null);
+
+    const GET_REQUESTS = `
+        query Query {
+            requests {
+                items {
+                    id
+                    requestId
+                    orgName
+                    fullName
+                    shortName
+                    orgNameGen
+                    basis
+                    print
+                    post
+                    directorName
+                    directorFullNameGen
+                    initials
+                    address
+                    email
+                    bankName
+                    BIK
+                    INN
+                    KPP
+                    OGRN
+                    OGRNIP
+                    RSCH
+                    KSCH
+                    phone
+                    type
+                    filename
+                    filePath
+                    contractNumber
+                    contractJustNumber
+                    numberDate
+                    writtenDate
+                    writtenAmountAct
+                    writtenAmountDogovor
+                    stoimostNumber
+                    state
+                    createdAt
+                    updatedAt
+                    services {
+                        serviceId
+                        name
+                        quantity
+                        unit
+                        pricePerUnit
+                        vat
+                        totalPrice
+                    }
+                    acts {
+                        actsNumber
+                        contractType
+                        creationDate
+                        filename
+                    }
+                    expenses {
+                        expensesNumber
+                        creationDate
+                        filename
+                    }
+                    reports {
+                        creationDate
+                        filename
+                    }
+                    requisites
+                    contractEndDate
+                    act_stoimostNumber
+                }
+            }
+            }
+    `;
+
+    useEffect(() => {
+        axios.post("http://31.207.75.252:4000/", {
+            query: GET_REQUESTS,
+            variables: {}
+        })
+            .then(res => setRequests(res.data.data.requests.items))
+            .catch(err => console.error("Ошибка загрузки заявок", err));
+    }, []);
+
+    // console.log(requests)
+
+    const openCounterpartyModal = () => {
+        setIsCounterpartyModalOpen(true);
+    };
+
+    const closeCounterpartyModal = () => {
+        setIsCounterpartyModalOpen(false);
+    };
+
+    const openCounterpartyDogovorModal = () => {
+        setIsCounterpartyModalOpen(true);
+    };
+
+    const closeCounterpartyDogovorModal = () => {
+        setIsCounterpartyModalOpen(false);
+    };
+
+    const handleCounterpartySubmit = (counterpartyData) => {
+        closeCounterpartyModal();
+    };
+
+    const handleCounterpartyDogovorSubmit = (counterpartyData) => {
+        closeCounterpartyModal();
+    };
+
+
+    const handleExit = () => {
+        localStorage.clear();
+        window.location.reload();
+    }
+
+    const handleCreate = (kind, req) => {
+        // TODO: сюда подключи GraphQL mutation создания
+        // kind: 'contract' | 'act' | 'invoice' | 'report'
+
+        if (kind === 'invoice') {
+            openInvoiceModal(req);
+        }
+
+        if (kind === 'contract') {
+            openInvoiceDogovorModal(req);
+        }
+    };
+
+    const handleDownload = async (kind, req) => {
+        // TODO: сюда — скачивание (blob / ссылка)
+        if (kind === 'contract') {
+            window.open('http://31.207.75.252:4000' + req.filePath, '_blank');
+        }
+        // console.log("Скачать:", kind, "для", req.id);
+    };
+
+    const openInvoiceModal = (contract) => {
+        setCurrentContract(contract);
+        setIsInvoiceModalOpen(true);
+    };
+
+    const closeInvoiceModal = () => {
+        setIsInvoiceModalOpen(false);
+        setCurrentContract(null);
+    };
+
+    const openInvoiceDogovorModal = (contract) => {
+        setCurrentContract(contract);
+        setIsInvoiceDogovorModalOpen(true);
+    };
+
+    const closeInvoiceDogovorModal = () => {
+        setIsInvoiceDogovorModalOpen(false);
+        setCurrentContract(null);
+    };
+
+
+    const handleInvoiceSubmit = async (data) => {
+        const formData = {
+            creationDate: data.date,
+            contractName: currentContract.filename,
+            data: {
+                services: data.services,
+                act_stoimostNumber: data.act_stoimostNumber,
+                act_writtenAmountAct: data.act_writtenAmountAct
+            }
+        };
+
+        console.log(formData)
+        // try {
+        //     await axios.post('https://backend.demoalazar.ru/generate-expenses', { formData });
+        //     closeInvoiceModal();
+        //     fetchDocuments();
+
+        //     setNotification({ message: `Счет для документа ${formData.contractName} успешно создан`, status: "success" });
+        //     // alert(`Счет для документа ${formData.contractName} успешно создан`);
+        //     setIsFetch(prev => !prev)
+        // } catch (error) {
+        //     console.error("Ошибка запроса", error);
+        //     setNotification({ message: "Ошибка при отправке данных", status: "error" });
+        //     // alert('Ошибка при отправке данных');
+        // }
+    };
+
+    // console.log('currentContract', currentContract);
+
+
+    const GEN_CONTRACT = `
+        mutation GenContract($id: ID!, $payload: ContractPayloadInput!) {
+            updateRequest(
+            id: $id,
+            input: {
+                generateContractFromPayload: true
+                contractPayload: $payload
+            }
+            ) {
+            id
+            filename
+            filePath
+            }
+        }
+    `;
+    const handleInvoiceDogovorSubmit = async (data) => {
+        let receiver_info =
+            (currentContract.type == 'Гос'
+                ?
+                (currentContract.NKAZCH != '' && currentContract.EKAZSCH != '' && currentContract.LSCH != '')
+                    ?
+                    `Адрес местонахождения: ${currentContract.address}, ИНН: ${currentContract.INN}, КПП: ${currentContract.KPP}, ОКТМО: ${currentContract.OKTMO}, ОКАТО: ${currentContract.OKATO}, Номер казначейского счета: ${currentContract.NKAZCH}, Единый казначейский счет: ${currentContract.EKAZSCH}, Банк: ${currentContract.bankName}, БИК: ${currentContract.BIK}, Л/сч: ${currentContract.LSCH}, ОГРН: ${currentContract.OGRN}, ОКПО: ${currentContract.OKPO}, ОКОПФ: ${currentContract.OKOPF}, ОКОГУ: ${currentContract.OKOGU}, E-mail: ${currentContract.email}, тел.: ${currentContract.phone}`
+                    :
+                    `Адрес местонахождения: ${currentContract.address}, ИНН: ${currentContract.INN}, КПП: ${currentContract.KPP}, ОКТМО: ${currentContract.OKTMO}, ОКАТО: ${currentContract.OKATO}, Р/СЧ: ${currentContract.RSCH}, К/СЧ: ${currentContract.KSCH}, Банк: ${currentContract.bankName}, БИК: ${currentContract.BIK}, ОГРН: ${currentContract.OGRN}, ОКПО: ${currentContract.OKPO}, ОКОПФ: ${currentContract.OKOPF}, ОКОГУ: ${currentContract.OKOGU}, E-mail: ${currentContract.email}, тел.: ${currentContract.phone}`
+                :
+                currentContract.type == 'МСП'
+                    ?
+                    `Адрес местонахождения: ${currentContract.address}, ИНН: ${currentContract.INN}, ОГРН: ${currentContract.OGRN}, КПП: ${currentContract.KPP}, Р/с: ${currentContract.RSCH}, Банк: ${currentContract.bankName}, БИК: ${currentContract.BIK}, К/с: ${currentContract.KSCH}, E-mail: ${currentContract.email}, тел.: ${currentContract.phone}`
+                    :
+                    currentContract.type == 'ИП'
+                        ?
+                        `Адрес местонахождения: ${currentContract.address}, ИНН: ${currentContract.INN}, ОГРНИП: ${currentContract.OGRNIP}, Р/с: ${currentContract.RSCH}, Банк: ${currentContract.bankName}, БИК: ${currentContract.BIK}, К/с: ${currentContract.KSCH}, E-mail: ${currentContract.email}, тел.: ${currentContract.phone}`
+                        :
+                        currentContract.type == 'Самозанятый'
+                            ?
+                            `Адрес местонахождения: ${currentContract.address}, Паспорт ${currentContract.passportSeries} № ${currentContract.passportNumber} ИНН: ${currentContract.INN}, Р/с: ${currentContract.RSCH}, Банк: ${currentContract.bankName}, БИК: ${currentContract.BIK}, К/с: ${currentContract.KSCH}, тел.: ${currentContract.phone}`
+                            :
+                            '')
+
+        let receiver_info_mass = receiver_info.split(',')
+
+        let result = receiver_info_mass.map(item => {
+            const [name, info] = item.split(':');
+            return {
+                name: name.trim(),
+                info: info ? info.trim() : ''
+            };
+        });
+
+
+
+
+        const formData = {
+            numberDate: data.numberDate,
+            contractNumber: data.contractNumber,
+            writtenDate: data.writtenDate,
+            receiver_fullName: currentContract.fullName,
+            contractJustNumber: data.contractJustNumber,
+            writtenAmountDogovor: data.writtenAmountDogovor,
+            contractEndDate: data.contractEndDate,
+
+            receiver_post: currentContract.post,
+            receiver_initials: currentContract.initials,
+            receiver_print: currentContract.print.toLowerCase() == 'да' ? 'М.П.' : 'Б.П.',
+
+            receiver_basis:
+                (currentContract.type == 'Гос' || currentContract.type == 'МСП' ? `действующий на основании ${currentContract.basis}` :
+                    currentContract.type == 'ИП' ? `действующий на основании ${currentContract.basis} ${currentContract.OGRNIP}` :
+                        currentContract.type == 'Самозанятый' ? `${currentContract.basis} (паспорт серия ${currentContract.passportSeries} №${currentContract.passportNumber}, ИНН ${currentContract.INN})` : ''),
+
+            receiver_requisites: result,
+
+            stoimostNumber: data.act_stoimostNumber,
+
+            act_stoimostNumber: data.act_stoimostNumber,
+            writtenAmountAct: data.act_writtenAmountAct,
+
+            services: data.services,
+        };
+
+        console.log('formData', formData);
+
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: GEN_CONTRACT,
+                variables: {
+                    id: currentContract.id,
+                    payload: formData,
+                },
+            });
+
+            const data = response.data.data.updateRequest;
+            console.log("Сгенерирован контракт:", data);
+
+            data && closeInvoiceDogovorModal();
+            // fetchDocuments();
+
+            // setNotification({ message: `Счет для документа ${formData.contractName} успешно создан`, status: "success" });
+            // alert(`Счет для документа ${formData.contractName} успешно создан`);
+            // setIsFetch(prev => !prev)
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+            // alert('Ошибка при отправке данных');
+        }
+    };
+
+    return (
+        <div className={classes.main}>
+            <div className={classes.mainForm}>
+                <div className={classes.mainForm_buttons}>
+                    <div className={classes.mainForm_buttons_elem}>
+                        <div className={classes.mainForm_buttons_btn} onClick={openCounterpartyModal}>Создать заявку</div>
+                    </div>
+
+                    <div className={classes.mainForm_buttons_search}>
+                        <input
+                            type="text"
+                            className={classes.searchInput}
+                            placeholder="Поиск..."
+                        // value={searchQuery}
+                        // onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <img src="/exit.png" alt="" style={{ width: '20px', cursor: 'pointer' }} onClick={handleExit} />
+                </div>
+
+                <div className={classes.mainForm_docs_title}>
+                    <div className={classes.mainForm_docs_element}>
+                        <div className={classes.mainForm_docs_element_info}>
+                            <div className={classes.mainForm_docs_element_num} >№ </div>
+                            <div className={classes.mainForm_docs_element_name} >Наименование организации </div>
+                            <div className={classes.mainForm_docs_element_contr} >ИНН</div>
+                            <div className={classes.mainForm_docs_element_contr} >Телефон </div>
+                            <div className={classes.mainForm_docs_element_date} >Дата </div>
+                            <div className={classes.mainForm_docs_element_price} >Стоимость </div>
+                            <div className={classes.mainForm_docs_element_state} >Состояние </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Рендеринг документов, сгруппированных по состояниям */}
+                <div className={classes.mainForm_docs}>
+                    {requests.map((req, index) => (
+                        <div key={req.id} className={classes.mainForm_docs_element}>
+                            <div className={classes.mainForm_docs_element_info}>
+                                <div className={classes.mainForm_docs_element_num}>{index + 1}</div>
+                                <div className={classes.mainForm_docs_element_name}>{req.shortName}</div>
+                                <div className={classes.mainForm_docs_element_contr}>{req.INN}</div>
+                                <div className={classes.mainForm_docs_element_contr}>{req.phone}</div>
+                                <div className={classes.mainForm_docs_element_date}>{req.numberDate ? req.numberDate : '-'}</div>
+                                <div className={classes.mainForm_docs_element_price}>{req.stoimostNumber ? req.stoimostNumber + ' ₽' : '-'}</div>
+                                <div className={classes.mainForm_docs_element_state}>
+                                    <select>
+                                        <option value="created">Создан</option>
+                                        <option value="Закрывающие готовы">Закрывающие готовы</option>
+                                        <option value="Согласование">Согласование</option>
+                                        <option value="Ждет оплаты">Ждет оплаты</option>
+                                        <option value="Оплачен">Оплачен</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className={classes.mainForm_docs_element_btns}>
+                                <DocMenu type="download" request={req} onSelect={handleDownload}>
+                                    <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
+                                </DocMenu>
+                                <DocMenu type="create" request={req} onSelect={handleCreate}>
+                                    <img src="/dots.png" alt="Действия" className={classes.icon} />
+                                </DocMenu>
+                                <img className={classes.deleteIcon} src="/delete.png" alt="" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+            </div>
+
+            <Modal isOpen={isCounterpartyModalOpen} onClose={closeCounterpartyModal}>
+                <AddCounterparty onSubmit={handleCounterpartySubmit} />
+            </Modal>
+
+            <Modal isOpen={isInvoiceModalOpen} onClose={closeInvoiceModal}>
+                <CreateInvoiceForm onSubmit={handleInvoiceSubmit} onClose={closeInvoiceModal} />
+            </Modal>
+
+            <Modal isOpen={isInvoiceDogovorModalOpen} onClose={closeInvoiceDogovorModal}>
+                <CreateInvoiceFormDogovor currentContract={currentContract} onSubmit={handleInvoiceDogovorSubmit} onClose={closeInvoiceDogovorModal} />
+            </Modal>
+        </div >
+    );
+}
+
+export default Request_page;

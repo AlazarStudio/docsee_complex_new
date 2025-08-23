@@ -1,0 +1,29 @@
+
+.dropdownMenu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #f3f3f3;
+    z-index: 1000;
+    margin-top: 5px;
+    top: 20px;
+    right: 10px;
+    width: 200px;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 0 10px #00000028;
+}
+
+.dropdownMenu_item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.dropdownMenu_item:last-child {
+    border-bottom: none;
+}
+
+.dropdownMenu_item:hover {
+    background-color: #835de1;
+    color: #fff;
+}

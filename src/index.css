@@ -24,3 +24,28 @@ main {
     gap: 80px;
     padding-bottom: 80px;
 }
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background-color: #825de10c;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #835de1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #835de1;
+}
+
+input,
+select {
+    height: 40px;
+    border: 1px solid #cecece;
+    outline: none;
+    border-radius: 5px;
+    padding: 0 10px;
+}
