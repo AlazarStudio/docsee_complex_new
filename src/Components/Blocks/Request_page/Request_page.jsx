@@ -187,12 +187,17 @@ function Request_page({ children, ...props }) {
 
     const handleInvoiceSubmit = async (data) => {
         const formData = {
-            creationDate: data.date,
+            expense_creationDate: data.date,
             contractName: currentContract.filename,
+            contractNumber: currentContract.contractNumber,
+
+            writtenDate: currentContract.writtenDate,
+
             services: data.services,
-            act_stoimostNumber: data.act_stoimostNumber,
-            act_writtenAmountAct: data.act_writtenAmountAct,
-            idRequest: currentContract.id
+            stoimostNumber: data.act_stoimostNumber,
+            writtenAmountAct: data.act_writtenAmountAct,
+            idRequest: currentContract.id,
+            expense_number: data.expenseNumber
         };
 
         console.log(formData)
@@ -329,11 +334,40 @@ function Request_page({ children, ...props }) {
 
     const handleActSubmit = async (data) => {
         const formData = {
-            creationDate: data.date,
+            act_receiver_requisites:
+                (currentContract.type == 'Гос'
+                    ?
+                    (currentContract.NKAZCH != '' && currentContract.EKAZSCH != '' && currentContract.LSCH != '') ?
+                        `${currentContract.fullName}, ИНН: ${currentContract.INN}, КПП: ${currentContract.KPP}, Номер казначейского счета: ${currentContract.NKAZCH}, Единый казначейский счет: ${currentContract.EKAZSCH}, ${currentContract.bankName}, БИК: ${currentContract.BIK}, Л/сч: ${currentContract.LSCH}, ОГРН: ${currentContract.OGRN}`
+                        :
+                        `${currentContract.fullName}, ИНН: ${currentContract.INN}, КПП: ${currentContract.KPP}, Р/СЧ: ${currentContract.RSCH}, К/СЧ: ${currentContract.KSCH}, ${currentContract.bankName}, БИК: ${currentContract.BIK}, ОГРН: ${currentContract.OGRN}, `
+                    :
+                    currentContract.type == 'МСП'
+                        ?
+                        `${currentContract.fullName}, ИНН: ${currentContract.INN}, ОГРН: ${currentContract.OGRN}, КПП: ${currentContract.KPP}, Р/с: ${currentContract.RSCH}, ${currentContract.bankName}, БИК: ${currentContract.BIK}, К/с: ${currentContract.KSCH}`
+                        :
+                        currentContract.type == 'ИП'
+                            ?
+                            `${currentContract.fullName}, ИНН: ${currentContract.INN}, ОГРНИП: ${currentContract.OGRNIP}, Р/с: ${currentContract.RSCH}, ${currentContract.bankName}, БИК: ${currentContract.BIK}, К/с: ${currentContract.KSCH}`
+                            :
+                            currentContract.type == 'Самозанятый'
+                                ?
+                                `${currentContract.fullName}, ИНН: ${currentContract.INN}, Р/с: ${currentContract.RSCH}, ${currentContract.bankName}, БИК: ${currentContract.BIK}, К/с: ${currentContract.KSCH}`
+                                :
+                                ''),
+            contractNumber: currentContract.contractNumber,
+            writtenDate: currentContract.writtenDate,
+
+            receiver_post: currentContract.post,
+            receiver_initials: currentContract.initials,
+            receiver_print: currentContract.print.toLowerCase() == 'да' ? 'М.П.' : 'Б.П.',
+
+            act_creationDate: data.date,
+            act_number: data.actNumber,
             contractName: currentContract.filename,
             services: data.services,
-            act_stoimostNumber: data.act_stoimostNumber,
-            act_writtenAmountAct: data.act_writtenAmountAct,            
+            stoimostNumber: data.act_stoimostNumber,
+            writtenAmountAct: data.act_writtenAmountAct,
             idRequest: currentContract.id
         };
 
@@ -368,10 +402,15 @@ function Request_page({ children, ...props }) {
     const handleReportSubmit = async (data) => {
         const formData = {
             creationDate: data.date,
-            // contractType: data.contractType,
-            reportTemplate: data.reportTemplate,
+            // reportTemplate: data.reportTemplate,
             contractName: currentContract.filename,
-            idRequest: currentContract.id
+            idRequest: currentContract.id,
+            receiver_orgNameGen: currentContract.directorFullNameGen,
+            contractNumber: currentContract.contractNumber,
+            writtenDate: currentContract.writtenDate,
+            numberDate: currentContract.numberDate,
+            services: currentContract.services,
+            stoimostNumber: currentContract.stoimostNumber,
         };
 
         console.log(formData)
@@ -388,6 +427,7 @@ function Request_page({ children, ...props }) {
         //     // alert('Ошибка при отправке данных');
         // }
     };
+
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>

@@ -43,6 +43,7 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 function CreateActForm({ onSubmit, currentContract, onClose }) {
     const [creationDate, setCreationDate] = useState('');
+    const [actNumber, setActNumber] = useState('');
 
     const [services, setServices] = useState(
         currentContract?.services?.length
@@ -89,7 +90,8 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
             date: getDate(creationDate),
             services: formattedServices,
             act_stoimostNumber: `${act_stoimostNumber_1},${act_stoimostNumber_2}`,
-            act_writtenAmountAct
+            act_writtenAmountAct,
+            actNumber
         });
     };
 
@@ -155,6 +157,16 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
         <>
             <h2>Создание нового акта для договора</h2>
             <form className={classes.modalForm} onSubmit={handleSubmit}>
+                <div>
+                    <label>Номер акта:</label>
+                    <input
+                        type="text"
+                        value={actNumber}
+                        placeholder='Введите номер акта'
+                        onChange={(e) => setActNumber(e.target.value)}
+                    />
+                </div>
+
                 <div>
                     <label>Дата:</label>
                     <input
