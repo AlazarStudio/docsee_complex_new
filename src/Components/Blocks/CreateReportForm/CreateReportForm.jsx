@@ -3,7 +3,7 @@ import classes from './CreateReportForm.module.css';
 
 function CreateReportForm({ onSubmit, onClose, currentContract }) {
     const [creationDate, setCreationDate] = useState('');
-    const [contractType, setContractType] = useState(currentContract && currentContract.data.contractType);
+    const [contractType, setContractType] = useState('3');
     const [reportTemplate, setReportTemplate] = useState('');
 
     function getDate(dateInfo, type = 'numeric') {
@@ -16,7 +16,7 @@ function CreateReportForm({ onSubmit, onClose, currentContract }) {
     const handleSubmit = (event) => {
         event.preventDefault();
         onSubmit({
-            contractType,
+            // contractType,
             reportTemplate,
             date: getDate(creationDate)
         });
@@ -31,26 +31,26 @@ function CreateReportForm({ onSubmit, onClose, currentContract }) {
     ]
 
     let list_3_side = [
-        {
-            label: "Отчет Комплексные Сайт",
-            template: "Template_3_side_report",
-        },
-        {
-            label: "Отчет Комплексные Видео",
-            template: "Template_3_side_report_video",
-        },
+        // {
+        //     label: "Отчет Комплексные Сайт",
+        //     template: "Template_3_side_report",
+        // },
+        // {
+        //     label: "Отчет Комплексные Видео",
+        //     template: "Template_3_side_report_video",
+        // },
         {
             label: "Отчет Комплексные Рекламка",
             template: "Template_3_side_report_marketing",
         },
-        {
-            label: "Отчет Комплексные Фирстиль",
-            template: "Template_3_side_report_firStyle",
-        },
-        {
-            label: "Отчет Комплексные Фото-контент",
-            template: "Template_3_side_report_photoContent",
-        }
+        // {
+        //     label: "Отчет Комплексные Фирстиль",
+        //     template: "Template_3_side_report_firStyle",
+        // },
+        // {
+        //     label: "Отчет Комплексные Фото-контент",
+        //     template: "Template_3_side_report_photoContent",
+        // }
     ]
 
     return (

@@ -6,6 +6,8 @@ import DropdownMenu from '../DropdownMenu/DropdownMenu';
 import AddCounterparty from "../AddCounterparty/AddCounterparty";
 import CreateInvoiceForm from '../CreateInvoiceForm/CreateInvoiceForm';
 import CreateInvoiceFormDogovor from '../CreateInvoiceFormDogovor/CreateInvoiceFormDogovor';
+import CreateActForm from '../CreateActForm/CreateActForm';
+import CreateReportForm from '../CreateReportForm/CreateReportForm';
 import DocMenu from "../DocMenu/DocMenu";
 
 function Request_page({ children, ...props }) {
@@ -16,6 +18,9 @@ function Request_page({ children, ...props }) {
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [isInvoiceModalDogovorOpen, setIsInvoiceModalDogovorOpen] = useState(false);
     const [currentContract, setCurrentContract] = useState(null);
+    const [isActModalOpen, setIsActModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
 
     const GET_REQUESTS = `
         query Query {
@@ -141,6 +146,14 @@ function Request_page({ children, ...props }) {
         if (kind === 'contract') {
             openInvoiceDogovorModal(req);
         }
+
+        if (kind === 'act') {
+            openActModal(req);
+        }
+
+        if (kind === 'report') {
+            openReportModal(req);
+        }
     };
 
     const handleDownload = async (kind, req) => {
@@ -176,11 +189,10 @@ function Request_page({ children, ...props }) {
         const formData = {
             creationDate: data.date,
             contractName: currentContract.filename,
-            data: {
-                services: data.services,
-                act_stoimostNumber: data.act_stoimostNumber,
-                act_writtenAmountAct: data.act_writtenAmountAct
-            }
+            services: data.services,
+            act_stoimostNumber: data.act_stoimostNumber,
+            act_writtenAmountAct: data.act_writtenAmountAct,
+            idRequest: currentContract.id
         };
 
         console.log(formData)
@@ -199,9 +211,6 @@ function Request_page({ children, ...props }) {
         // }
     };
 
-    // console.log('currentContract', currentContract);
-
-
     const GEN_CONTRACT = `
         mutation GenContract($id: ID!, $payload: ContractPayloadInput!) {
             updateRequest(
@@ -217,6 +226,7 @@ function Request_page({ children, ...props }) {
             }
         }
     `;
+
     const handleInvoiceDogovorSubmit = async (data) => {
         let receiver_info =
             (currentContract.type == 'Гос'
@@ -251,9 +261,6 @@ function Request_page({ children, ...props }) {
             };
         });
 
-
-
-
         const formData = {
             numberDate: data.numberDate,
             contractNumber: data.contractNumber,
@@ -282,7 +289,7 @@ function Request_page({ children, ...props }) {
             services: data.services,
         };
 
-        console.log('formData', formData);
+        // console.log('formData', formData);
 
         try {
             const response = await axios.post("http://31.207.75.252:4000/graphql", {
@@ -309,6 +316,78 @@ function Request_page({ children, ...props }) {
         }
     };
 
+
+    const openActModal = (contract) => {
+        setCurrentContract(contract);
+        setIsActModalOpen(true);
+    };
+
+    const closeActModal = () => {
+        setIsActModalOpen(false);
+        setCurrentContract(null);
+    };
+
+    const handleActSubmit = async (data) => {
+        const formData = {
+            creationDate: data.date,
+            contractName: currentContract.filename,
+            services: data.services,
+            act_stoimostNumber: data.act_stoimostNumber,
+            act_writtenAmountAct: data.act_writtenAmountAct,            
+            idRequest: currentContract.id
+        };
+
+        console.log(formData)
+        // try {
+        //     await axios.post('https://backend.demoalazar.ru/generate-acts', { formData });
+        //     closeActModal();
+        //     fetchDocuments();
+        //     setNotification({ message: `Акт для документа ${formData.contractName} успешно создан`, status: "success" });
+        //     // alert(`Акт для документа ${formData.contractName} успешно создан`);
+        //     setIsFetch(prev => !prev)
+        // } catch (error) {
+        //     console.error("Ошибка запроса", error);
+
+        //     setNotification({ message: "Ошибка при отправке данных", status: "error" });
+        //     // alert('Ошибка при отправке данных');
+        // }
+    };
+
+
+
+    const openReportModal = (contract) => {
+        setCurrentContract(contract);
+        setIsReportModalOpen(true);
+    };
+
+    const closeReportModal = () => {
+        setIsReportModalOpen(false);
+        setCurrentContract(null);
+    };
+
+    const handleReportSubmit = async (data) => {
+        const formData = {
+            creationDate: data.date,
+            // contractType: data.contractType,
+            reportTemplate: data.reportTemplate,
+            contractName: currentContract.filename,
+            idRequest: currentContract.id
+        };
+
+        console.log(formData)
+        // try {
+        //     await axios.post('https://backend.demoalazar.ru/generate-report', { formData });
+        //     closeReportModal();
+        //     fetchDocuments();
+        //     setNotification({ message: `Отчет для документа ${formData.contractName} успешно создан`, status: "success" });
+        //     // alert(`Отчет для документа ${formData.contractName} успешно создан`);
+        //     setIsFetch(prev => !prev)
+        // } catch (error) {
+        //     console.error("Ошибка запроса", error);
+        //     setNotification({ message: "Ошибка при отправке данных", status: "error" });
+        //     // alert('Ошибка при отправке данных');
+        // }
+    };
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
@@ -384,11 +463,19 @@ function Request_page({ children, ...props }) {
             </Modal>
 
             <Modal isOpen={isInvoiceModalOpen} onClose={closeInvoiceModal}>
-                <CreateInvoiceForm onSubmit={handleInvoiceSubmit} onClose={closeInvoiceModal} />
+                <CreateInvoiceForm currentContract={currentContract} onSubmit={handleInvoiceSubmit} onClose={closeInvoiceModal} />
             </Modal>
 
             <Modal isOpen={isInvoiceDogovorModalOpen} onClose={closeInvoiceDogovorModal}>
                 <CreateInvoiceFormDogovor currentContract={currentContract} onSubmit={handleInvoiceDogovorSubmit} onClose={closeInvoiceDogovorModal} />
+            </Modal>
+
+            <Modal isOpen={isActModalOpen} onClose={closeActModal}>
+                <CreateActForm currentContract={currentContract} onSubmit={handleActSubmit} onClose={closeActModal} />
+            </Modal>
+
+            <Modal isOpen={isReportModalOpen} onClose={closeReportModal}>
+                <CreateReportForm onSubmit={handleReportSubmit} currentContract={currentContract} onClose={closeReportModal} />
             </Modal>
         </div >
     );
