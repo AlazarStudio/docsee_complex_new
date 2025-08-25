@@ -63,7 +63,7 @@ function CreateReportForm({ onSubmit, onClose, currentContract }) {
                         type="date"
                         value={creationDate}
                         onChange={(e) => setCreationDate(e.target.value)}
-                        required
+                        required={true}
                     />
                 </div>
                 {/* <div>

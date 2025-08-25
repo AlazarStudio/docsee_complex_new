@@ -9,20 +9,11 @@ import CreateInvoiceFormDogovor from '../CreateInvoiceFormDogovor/CreateInvoiceF
 import CreateActForm from '../CreateActForm/CreateActForm';
 import CreateReportForm from '../CreateReportForm/CreateReportForm';
 import DocMenu from "../DocMenu/DocMenu";
-
-function Request_page({ children, ...props }) {
-    const [requests, setRequests] = useState([]);
-
-    const [isCounterpartyModalOpen, setIsCounterpartyModalOpen] = useState(false);
-    const [isInvoiceDogovorModalOpen, setIsInvoiceDogovorModalOpen] = useState(false);
-    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-    const [isInvoiceModalDogovorOpen, setIsInvoiceModalDogovorOpen] = useState(false);
-    const [currentContract, setCurrentContract] = useState(null);
-    const [isActModalOpen, setIsActModalOpen] = useState(false);
-    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+import Notification from "../Notification/Notification.jsx";
+import { gql, useQuery, useSubscription } from "@apollo/client";
 
 
-    const GET_REQUESTS = `
+const GET_REQUESTS = gql`
         query Query {
             requests {
                 items {
@@ -76,15 +67,18 @@ function Request_page({ children, ...props }) {
                         contractType
                         creationDate
                         filename
+                        filePath
                     }
                     expenses {
                         expensesNumber
                         creationDate
                         filename
+                        filePath
                     }
                     reports {
                         creationDate
                         filename
+                        filePath
                     }
                     requisites
                     contractEndDate
@@ -92,16 +86,61 @@ function Request_page({ children, ...props }) {
                 }
             }
             }
-    `;
+`;
+
+const REQUEST_UPDATED = gql`
+  subscription Subscription {
+    requestUpdated {
+      id
+      updatedAt
+    }
+  }
+`;
+
+function Request_page({ children, ...props }) {
+    const [requests, setRequests] = useState([]);
+    const { data, loading, error, refetch } = useQuery(GET_REQUESTS, {
+        fetchPolicy: "no-cache",
+        context: {
+            addTypename: false,
+        },
+    });
+
+    const [isCounterpartyModalOpen, setIsCounterpartyModalOpen] = useState(false);
+    const [isInvoiceDogovorModalOpen, setIsInvoiceDogovorModalOpen] = useState(false);
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+    const [isInvoiceModalDogovorOpen, setIsInvoiceModalDogovorOpen] = useState(false);
+    const [currentContract, setCurrentContract] = useState(null);
+    const [isActModalOpen, setIsActModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+    const [notification, setNotification] = useState({ message: "", status: "" });
+
+    const clearNotification = () => {
+        setNotification({ message: "", status: "" });
+    };
+
+    // useEffect(() => {
+    //     axios.post("http://31.207.75.252:4000/", {
+    //         query: GET_REQUESTS,
+    //         variables: {}
+    //     })
+    //         .then(res => setRequests(res.data.data.requests.items))
+    //         .catch(err => console.error("Ошибка загрузки заявок", err));
+    // }, []);
 
     useEffect(() => {
-        axios.post("http://31.207.75.252:4000/", {
-            query: GET_REQUESTS,
-            variables: {}
-        })
-            .then(res => setRequests(res.data.data.requests.items))
-            .catch(err => console.error("Ошибка загрузки заявок", err));
-    }, []);
+        if (data?.requests?.items) {
+            setRequests(data.requests.items);
+        }
+    }, [data]);
+
+    useSubscription(REQUEST_UPDATED, {
+        onData: ({ client, data }) => {
+            // можно точечно обновлять, но безопаснее рефетчнуть (быстро и просто)
+            refetch();
+        },
+    });
 
     // console.log(requests)
 
@@ -157,11 +196,21 @@ function Request_page({ children, ...props }) {
     };
 
     const handleDownload = async (kind, req) => {
-        // TODO: сюда — скачивание (blob / ссылка)
         if (kind === 'contract') {
             window.open('http://31.207.75.252:4000' + req.filePath, '_blank');
         }
-        // console.log("Скачать:", kind, "для", req.id);
+        if (kind === 'invoice') {
+            console.log(req)
+            window.open('http://31.207.75.252:4000' + req.expenses.at(-1).filePath, '_blank');
+        }
+        if (kind === 'act') {
+            console.log(req)
+            window.open('http://31.207.75.252:4000' + req.acts.at(-1).filePath, '_blank');
+        }
+        if (kind === 'report') {
+            console.log(req)
+            window.open('http://31.207.75.252:4000' + req.reports.at(-1).filePath, '_blank');
+        }
     };
 
     const openInvoiceModal = (contract) => {
@@ -184,6 +233,13 @@ function Request_page({ children, ...props }) {
         setCurrentContract(null);
     };
 
+    const GEN_EXPENCE = `
+        mutation Mutation($input: ExpensePayloadInput!) {
+            addExpenseFromPayload(input: $input) {
+                id
+            }
+        }
+    `;
 
     const handleInvoiceSubmit = async (data) => {
         const formData = {
@@ -200,34 +256,42 @@ function Request_page({ children, ...props }) {
             expense_number: data.expenseNumber
         };
 
-        console.log(formData)
-        // try {
-        //     await axios.post('https://backend.demoalazar.ru/generate-expenses', { formData });
-        //     closeInvoiceModal();
-        //     fetchDocuments();
+        // console.log(formData)
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: GEN_EXPENCE,
+                variables: {
+                    input: formData,
+                }
+            });
 
-        //     setNotification({ message: `Счет для документа ${formData.contractName} успешно создан`, status: "success" });
-        //     // alert(`Счет для документа ${formData.contractName} успешно создан`);
-        //     setIsFetch(prev => !prev)
-        // } catch (error) {
-        //     console.error("Ошибка запроса", error);
-        //     setNotification({ message: "Ошибка при отправке данных", status: "error" });
-        //     // alert('Ошибка при отправке данных');
-        // }
+            const data = response.data.data.addExpenseFromPayload;
+            // console.log("Сгенерирован счет:", data);
+            data && closeInvoiceModal();
+            // fetchDocuments();
+
+            setNotification({ message: `Счет для документа ${formData.contractName} успешно создан`, status: "success" });
+            // alert(`Счет для документа ${formData.contractName} успешно создан`);
+            // setIsFetch(prev => !prev)
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+            // alert('Ошибка при отправке данных');
+        }
     };
 
     const GEN_CONTRACT = `
         mutation GenContract($id: ID!, $payload: ContractPayloadInput!) {
             updateRequest(
-            id: $id,
-            input: {
-                generateContractFromPayload: true
-                contractPayload: $payload
-            }
+                id: $id,
+                input: {
+                    generateContractFromPayload: true
+                    contractPayload: $payload
+                }
             ) {
-            id
-            filename
-            filePath
+                id
+                filename
+                filePath
             }
         }
     `;
@@ -277,7 +341,7 @@ function Request_page({ children, ...props }) {
 
             receiver_post: currentContract.post,
             receiver_initials: currentContract.initials,
-            receiver_print: currentContract.print.toLowerCase() == 'да' ? 'М.П.' : 'Б.П.',
+            receiver_print: currentContract.print,
 
             receiver_basis:
                 (currentContract.type == 'Гос' || currentContract.type == 'МСП' ? `действующий на основании ${currentContract.basis}` :
@@ -306,12 +370,12 @@ function Request_page({ children, ...props }) {
             });
 
             const data = response.data.data.updateRequest;
-            console.log("Сгенерирован контракт:", data);
+            // console.log("Сгенерирован контракт:", data);
 
             data && closeInvoiceDogovorModal();
             // fetchDocuments();
 
-            // setNotification({ message: `Счет для документа ${formData.contractName} успешно создан`, status: "success" });
+            setNotification({ message: `Договор успешно создан`, status: "success" });
             // alert(`Счет для документа ${formData.contractName} успешно создан`);
             // setIsFetch(prev => !prev)
         } catch (error) {
@@ -331,6 +395,15 @@ function Request_page({ children, ...props }) {
         setIsActModalOpen(false);
         setCurrentContract(null);
     };
+
+
+    const GEN_ACT = `
+        mutation AddActFromPayload($input: ActPayloadInput!) {
+            addActFromPayload(input: $input) {
+                id
+            }
+        }
+    `;
 
     const handleActSubmit = async (data) => {
         const formData = {
@@ -360,7 +433,7 @@ function Request_page({ children, ...props }) {
 
             receiver_post: currentContract.post,
             receiver_initials: currentContract.initials,
-            receiver_print: currentContract.print.toLowerCase() == 'да' ? 'М.П.' : 'Б.П.',
+            receiver_print: currentContract.print,
 
             act_creationDate: data.date,
             act_number: data.actNumber,
@@ -371,20 +444,28 @@ function Request_page({ children, ...props }) {
             idRequest: currentContract.id
         };
 
-        console.log(formData)
-        // try {
-        //     await axios.post('https://backend.demoalazar.ru/generate-acts', { formData });
-        //     closeActModal();
-        //     fetchDocuments();
-        //     setNotification({ message: `Акт для документа ${formData.contractName} успешно создан`, status: "success" });
-        //     // alert(`Акт для документа ${formData.contractName} успешно создан`);
-        //     setIsFetch(prev => !prev)
-        // } catch (error) {
-        //     console.error("Ошибка запроса", error);
+        // console.log(formData)
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: GEN_ACT,
+                variables: {
+                    input: formData,
+                }
+            });
 
-        //     setNotification({ message: "Ошибка при отправке данных", status: "error" });
-        //     // alert('Ошибка при отправке данных');
-        // }
+            const data = response.data.data.addActFromPayload;
+            // console.log("Сгенерирован акт:", data);
+            data && closeActModal();
+            // fetchDocuments();
+            setNotification({ message: `Акт для документа ${formData.contractName} успешно создан`, status: "success" });
+            // alert(`Акт для документа ${formData.contractName} успешно создан`);
+            // setIsFetch(prev => !prev)
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+            // alert('Ошибка при отправке данных');
+        }
     };
 
 
@@ -399,6 +480,15 @@ function Request_page({ children, ...props }) {
         setCurrentContract(null);
     };
 
+
+    const GEN_REPORT = `
+        mutation AddReportFromPayload($input: ReportPayloadInput!) {
+            addReportFromPayload(input: $input) {
+                id
+            }
+        }
+    `;
+
     const handleReportSubmit = async (data) => {
         const formData = {
             creationDate: data.date,
@@ -409,23 +499,33 @@ function Request_page({ children, ...props }) {
             contractNumber: currentContract.contractNumber,
             writtenDate: currentContract.writtenDate,
             numberDate: currentContract.numberDate,
-            services: currentContract.services,
+            services: currentContract.services.map(({ __typename, ...rest }) => rest),
             stoimostNumber: currentContract.stoimostNumber,
         };
 
-        console.log(formData)
-        // try {
-        //     await axios.post('https://backend.demoalazar.ru/generate-report', { formData });
-        //     closeReportModal();
-        //     fetchDocuments();
-        //     setNotification({ message: `Отчет для документа ${formData.contractName} успешно создан`, status: "success" });
-        //     // alert(`Отчет для документа ${formData.contractName} успешно создан`);
-        //     setIsFetch(prev => !prev)
-        // } catch (error) {
-        //     console.error("Ошибка запроса", error);
-        //     setNotification({ message: "Ошибка при отправке данных", status: "error" });
-        //     // alert('Ошибка при отправке данных');
-        // }
+        // console.log(formData)
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: GEN_REPORT,
+                variables: {
+                    input: formData,
+                }
+            });
+
+            const data = response.data.data.addReportFromPayload;
+            // console.log("Сгенерирован отчет:", data);     
+
+
+            data && closeReportModal();
+            // fetchDocuments();
+            setNotification({ message: `Отчет для документа ${formData.contractName} успешно создан`, status: "success" });
+            // alert(`Отчет для документа ${formData.contractName} успешно создан`);
+            // setIsFetch(prev => !prev)
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+            // alert('Ошибка при отправке данных');
+        }
     };
 
     return (
@@ -517,6 +617,8 @@ function Request_page({ children, ...props }) {
             <Modal isOpen={isReportModalOpen} onClose={closeReportModal}>
                 <CreateReportForm onSubmit={handleReportSubmit} currentContract={currentContract} onClose={closeReportModal} />
             </Modal>
+
+            <Notification message={notification.message} status={notification.status} clearNotification={clearNotification} />
         </div >
     );
 }

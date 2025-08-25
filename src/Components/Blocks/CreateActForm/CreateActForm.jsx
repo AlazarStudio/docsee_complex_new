@@ -83,7 +83,8 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
             }),
         }));
 
-        let act_stoimostNumber_1 = parseFloat(act_stoimostNumber.split(',')[0]).toLocaleString('ru-RU');
+        let numberForParse = act_stoimostNumber.replace(/\s+/g, "");
+        let act_stoimostNumber_1 = parseFloat(numberForParse.split(',')[0]).toLocaleString('ru-RU');
         let act_stoimostNumber_2 = act_stoimostNumber.split(',')[1];
 
         onSubmit({
@@ -164,16 +165,17 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
                         value={actNumber}
                         placeholder='Введите номер акта'
                         onChange={(e) => setActNumber(e.target.value)}
+                        required={true}
                     />
                 </div>
 
                 <div>
                     <label>Дата:</label>
                     <input
-                        required
                         type="date"
                         value={creationDate}
                         onChange={(e) => setCreationDate(e.target.value)}
+                        required={true}
                     />
                 </div>
 

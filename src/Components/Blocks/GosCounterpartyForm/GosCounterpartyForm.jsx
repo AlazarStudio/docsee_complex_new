@@ -59,8 +59,8 @@ function GosCounterpartyForm({ formData, handleChange }) {
             <div>
                 <label>Печать</label>
                 <select name="print" required className={classes.input} value={formData.print} onChange={handleChange}>
-                    <option value="да">Да</option>
-                    <option value="нет">Нет</option>
+                    <option value="М.П.">Да</option>
+                    <option value="Б.П.">Нет</option>
                 </select>
             </div>
 
