@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from './Request_page.module.css';
 import axios from "axios";
 import Modal from '../Modal/Modal';
@@ -126,7 +126,15 @@ function Request_page({ children, ...props }) {
 
     useEffect(() => {
         if (data?.requests) {
-            setRequests(data.requests);
+            const sorted = [...data.requests].sort(
+                (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+
+            const withOrder = sorted.map((req, i) => ({
+                ...req,
+                order: i + 1
+            }));
+            setRequests(withOrder);
         }
     }, [data]);
 
@@ -188,16 +196,28 @@ function Request_page({ children, ...props }) {
             window.open('http://31.207.75.252:4000' + req.filePath, '_blank');
         }
         if (kind === 'invoice') {
-            console.log(req)
-            window.open('http://31.207.75.252:4000' + req.expenses.at(-1).filePath, '_blank');
+            if (req.expenses.length === 1) {
+                window.open('http://31.207.75.252:4000' + req.expenses.at(-1).filePath, '_blank');
+            } else {
+                setFilesToDownload(req.expenses);
+                setIsDownloadModalOpen(true);
+            }
         }
         if (kind === 'act') {
-            console.log(req)
-            window.open('http://31.207.75.252:4000' + req.acts.at(-1).filePath, '_blank');
+            if (req.acts.length === 1) {
+                window.open('http://31.207.75.252:4000' + req.acts.at(-1).filePath, '_blank');
+            } else {
+                setFilesToDownload(req.acts);
+                setIsDownloadModalOpen(true);
+            }
         }
         if (kind === 'report') {
-            console.log(req)
-            window.open('http://31.207.75.252:4000' + req.reports.at(-1).filePath, '_blank');
+            if (req.reports.length === 1) {
+                window.open('http://31.207.75.252:4000' + req.reports.at(-1).filePath, '_blank');
+            } else {
+                setFilesToDownload(req.reports);
+                setIsDownloadModalOpen(true);
+            }
         }
     };
 
@@ -544,9 +564,8 @@ function Request_page({ children, ...props }) {
         }
     };
 
-    const [noteName, setNoteName] = useState("Название");
-
     const [noteDesc, setNoteDesc] = useState("");
+
     const [savingNote, setSavingNote] = useState(false);
 
     function getNow() {
@@ -691,6 +710,14 @@ function Request_page({ children, ...props }) {
         "paid": "Оплачен"
     };
 
+    const stateClassMap = {
+        created: classes.grayState,
+        closing_ready: classes.blueState,
+        agreement: classes.yellowState,
+        waiting_payment: classes.orangeState,
+        paid: classes.greenState,
+    };
+
     const handleSort = (column) => {
         let newSortDirection = 'asc';
 
@@ -757,6 +784,77 @@ function Request_page({ children, ...props }) {
         );
     });
 
+    const stateOrder = Object.keys(stateMap);
+
+    const groups = useMemo(() => {
+        const init = Object.fromEntries(stateOrder.map(k => [k, []]));
+        (filteredDocuments || []).forEach(doc => {
+            const key = stateOrder.includes(doc.state) ? doc.state : "created";
+            init[key].push(doc);
+        });
+        return init;
+    }, [filteredDocuments]);
+
+    const renderRow = (req) => (
+        <div key={req.id} className={[
+            classes.mainForm_docs_element,
+            stateClassMap[req.state], // добавит нужный цвет
+        ].join(" ")} >
+            <div className={classes.mainForm_docs_element_info}>
+                <div className={classes.mainForm_docs_element_num}>{req.order}</div>
+                <div className={classes.mainForm_docs_element_name}>{req.shortName}</div>
+                <div className={classes.mainForm_docs_element_contr}>{req.INN}</div>
+                <div className={classes.mainForm_docs_element_contr}>{req.phone}</div>
+                <div className={classes.mainForm_docs_element_date}>{req.numberDate || '-'}</div>
+                <div className={classes.mainForm_docs_element_price}>{req.stoimostNumber ? `${req.stoimostNumber} ₽` : '-'}</div>
+                <div className={classes.mainForm_docs_element_state}>
+                    <select
+                        value={req.state ?? "created"}
+                        onChange={(e) => handleUpdateStateDocument(req.id, e.target.value)}
+                    >
+                        {Object.entries(stateMap).map(([key, value]) => (
+                            <option key={key} value={key}>{value}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            <div className={classes.mainForm_docs_element_btns}>
+                <div className={classes.iconMess}>
+                    <img src="/chat.png" alt="Примечания" onClick={() => handleGetNotes(req.id)} />
+                    {!!req.notes?.length && <div className={classes.iconMess_count}>{req.notes.length}</div>}
+                </div>
+                <DocMenu type="download" request={req} onSelect={handleDownload}>
+                    <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
+                </DocMenu>
+                <DocMenu type="create" request={req} onSelect={handleCreate}>
+                    <img src="/dots.png" alt="Действия" className={classes.icon} />
+                </DocMenu>
+                <img className={classes.deleteIcon} src="/delete.png" alt="" onClick={() => handleDeleteDocument(req.id)} />
+            </div>
+        </div>
+    );
+
+
+    const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+    const [filesToDownload, setFilesToDownload] = useState([]);
+
+    const closeDownloadModal = () => {
+        setIsDownloadModalOpen(false);
+        setFilesToDownload([]);
+    };
+
+    console.log(filesToDownload)
+
+    // function parseDateRU(dateStr) {
+    //     if (!dateStr) return 0;
+    //     const parts = dateStr.split(".");
+    //     if (parts.length !== 3) return 0;
+    //     const [dd, mm, yyyy] = parts;
+    //     const d = new Date(`${yyyy}-${mm}-${dd}`);
+    //     return isNaN(d) ? 0 : d.getTime();
+    // }
+
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
@@ -793,39 +891,18 @@ function Request_page({ children, ...props }) {
 
                 {!loading ?
                     <div className={classes.mainForm_docs}>
-                        {filteredDocuments.map((req, index) => (
-                            <div key={req.id} className={classes.mainForm_docs_element}>
-                                <div className={classes.mainForm_docs_element_info}>
-                                    <div className={classes.mainForm_docs_element_num}>{index + 1}</div>
-                                    <div className={classes.mainForm_docs_element_name}>{req.shortName}</div>
-                                    <div className={classes.mainForm_docs_element_contr}>{req.INN}</div>
-                                    <div className={classes.mainForm_docs_element_contr}>{req.phone}</div>
-                                    <div className={classes.mainForm_docs_element_date}>{req.numberDate ? req.numberDate : '-'}</div>
-                                    <div className={classes.mainForm_docs_element_price}>{req.stoimostNumber ? req.stoimostNumber + ' ₽' : '-'}</div>
-                                    <div className={classes.mainForm_docs_element_state}>
-                                        <select onChange={(e) => handleUpdateStateDocument(req.id, e.target.value)} value={req.state ?? "created"}>
-                                            {
-                                                Object.entries(stateMap).map(([key, value]) => {
-                                                    return <option key={key} value={key}>{value}</option>;
-                                                })
-                                            }
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className={classes.mainForm_docs_element_btns}>
-                                    <div className={classes.iconMess}>
-                                        <img src="/chat.png" alt="Скачать" onClick={() => handleGetNotes(req.id)} />
-                                        {req.notes.length > 0 && <div className={classes.iconMess_count}>{req.notes.length}</div>}
-                                    </div>
-                                    <DocMenu type="download" request={req} onSelect={handleDownload}>
-                                        <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
-                                    </DocMenu>
-                                    <DocMenu type="create" request={req} onSelect={handleCreate}>
-                                        <img src="/dots.png" alt="Действия" className={classes.icon} />
-                                    </DocMenu>
-                                    <img className={classes.deleteIcon} src="/delete.png" alt="" onClick={() => handleDeleteDocument(req.id)} />
-                                </div>
-                            </div>
+                        {stateOrder.map((key) => (
+                            <section key={key} className={classes.groupSection}>
+                                {groups[key].length > 0 && (
+                                    <>
+                                        <div className={classes.groupHeader}>
+                                            <h3 className={classes.groupTitle}>{stateMap[key]}</h3>
+                                        </div>
+
+                                        {groups[key].map(renderRow)}
+                                    </>
+                                )}
+                            </section>
                         ))}
                     </div>
                     : "Загрузка ..."
@@ -966,6 +1043,30 @@ function Request_page({ children, ...props }) {
                             </button>
                         </div>
                     </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={isDownloadModalOpen} onClose={closeDownloadModal}>
+                <div className={classes.downloadModal}>
+                    <h3>Выберите файл для скачивания:</h3>
+                    <ul>
+                        {filesToDownload.sort(
+                            (a, b) => parseDateRU(b.creationDate) - parseDateRU(a.creationDate)
+                        ).map((file, index) => (
+                            <li key={index} onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `http://31.207.75.252:4000${file.filePath}`;
+                                link.download = '';
+                                link.click();
+                                // closeDownloadModal();
+                            }}>
+                                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                    <div>{file.filename} </div>
+                                    <div>{file.creationDate} г.</div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             </Modal>
 
