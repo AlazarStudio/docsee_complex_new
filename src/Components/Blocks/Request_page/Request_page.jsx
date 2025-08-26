@@ -193,11 +193,11 @@ function Request_page({ children, ...props }) {
 
     const handleDownload = async (kind, req) => {
         if (kind === 'contract') {
-            window.open('http://31.207.75.252:4000' + req.filePath, '_blank');
+            window.open('https://complexbackend.demoalazar.ru' + req.filePath, '_blank');
         }
         if (kind === 'invoice') {
             if (req.expenses.length === 1) {
-                window.open('http://31.207.75.252:4000' + req.expenses.at(-1).filePath, '_blank');
+                window.open('https://complexbackend.demoalazar.ru' + req.expenses.at(-1).filePath, '_blank');
             } else {
                 setFilesToDownload(req.expenses);
                 setIsDownloadModalOpen(true);
@@ -205,7 +205,7 @@ function Request_page({ children, ...props }) {
         }
         if (kind === 'act') {
             if (req.acts.length === 1) {
-                window.open('http://31.207.75.252:4000' + req.acts.at(-1).filePath, '_blank');
+                window.open('https://complexbackend.demoalazar.ru' + req.acts.at(-1).filePath, '_blank');
             } else {
                 setFilesToDownload(req.acts);
                 setIsDownloadModalOpen(true);
@@ -213,7 +213,7 @@ function Request_page({ children, ...props }) {
         }
         if (kind === 'report') {
             if (req.reports.length === 1) {
-                window.open('http://31.207.75.252:4000' + req.reports.at(-1).filePath, '_blank');
+                window.open('https://complexbackend.demoalazar.ru' + req.reports.at(-1).filePath, '_blank');
             } else {
                 setFilesToDownload(req.reports);
                 setIsDownloadModalOpen(true);
@@ -265,7 +265,7 @@ function Request_page({ children, ...props }) {
         };
 
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: GEN_EXPENCE,
                 variables: {
                     input: formData,
@@ -361,7 +361,7 @@ function Request_page({ children, ...props }) {
         };
 
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: GEN_CONTRACT,
                 variables: {
                     id: currentContract.id,
@@ -438,7 +438,7 @@ function Request_page({ children, ...props }) {
         };
 
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: GEN_ACT,
                 variables: {
                     input: formData,
@@ -487,7 +487,7 @@ function Request_page({ children, ...props }) {
         };
 
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: GEN_REPORT,
                 variables: {
                     input: formData,
@@ -515,7 +515,7 @@ function Request_page({ children, ...props }) {
 
     const handleUpdateStateDocument = async (id, state) => {
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: UPDATE_STATE_REQUEST,
                 variables: {
                     "updateRequestId": id,
@@ -546,7 +546,7 @@ function Request_page({ children, ...props }) {
 
     const handleDeleteDocument = async (id) => {
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: DELETE_REQUEST,
                 variables: {
                     "deleteRequestId": id
@@ -615,7 +615,7 @@ function Request_page({ children, ...props }) {
 
     const handleUpdateNotesDocument = async (id, notes) => {
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: UPDATE_NOTES,
                 variables: {
                     "updateRequestId": id,
@@ -652,7 +652,7 @@ function Request_page({ children, ...props }) {
 
     const handleGetNotes = async (id) => {
         try {
-            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+            const response = await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                 query: GET_NOTES,
                 variables: {
                     "requestId": id,
@@ -1056,7 +1056,7 @@ function Request_page({ children, ...props }) {
                         ).map((file, index) => (
                             <li key={index} onClick={() => {
                                 const link = document.createElement('a');
-                                link.href = `http://31.207.75.252:4000${file.filePath}`;
+                                link.href = `https://complexbackend.demoalazar.ru${file.filePath}`;
                                 link.download = '';
                                 link.click();
                                 // closeDownloadModal();

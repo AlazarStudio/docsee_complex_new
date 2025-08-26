@@ -169,7 +169,7 @@ function AddCounterparty({ onSubmit }) {
         `;
 
         try {
-            axios.post("http://31.207.75.252:4000/", {
+            axios.post("https://complexbackend.demoalazar.ru/", {
                 query: CREATE_REQUEST,
                 variables: {
                     input: updatedData,
