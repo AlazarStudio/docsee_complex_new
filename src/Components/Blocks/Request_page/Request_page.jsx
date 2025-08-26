@@ -844,17 +844,6 @@ function Request_page({ children, ...props }) {
         setFilesToDownload([]);
     };
 
-    console.log(filesToDownload)
-
-    // function parseDateRU(dateStr) {
-    //     if (!dateStr) return 0;
-    //     const parts = dateStr.split(".");
-    //     if (parts.length !== 3) return 0;
-    //     const [dd, mm, yyyy] = parts;
-    //     const d = new Date(`${yyyy}-${mm}-${dd}`);
-    //     return isNaN(d) ? 0 : d.getTime();
-    // }
-
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
