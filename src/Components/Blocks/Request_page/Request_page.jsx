@@ -844,12 +844,22 @@ function Request_page({ children, ...props }) {
         setFilesToDownload([]);
     };
 
+    const totalReq = requests.length;
+    const totalCost = requests.reduce((sum, req) => sum + parseNumberRU(req.stoimostNumber), 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
                 <div className={classes.mainForm_buttons}>
                     <div className={classes.mainForm_buttons_elem}>
                         <div className={classes.mainForm_buttons_btn} onClick={openCounterpartyModal}>Создать заявку</div>
+                    </div>
+
+                    <div className={classes.mainForm_buttons_stat}>
+                        Заявок: {totalReq}
+                    </div>
+                    <div className={classes.mainForm_buttons_stat}>
+                        Сумма: {totalCost} ₽
                     </div>
 
                     <div className={classes.mainForm_buttons_search}>
@@ -860,8 +870,10 @@ function Request_page({ children, ...props }) {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
+                        <img src="/exit.png" alt="" style={{ width: '20px', cursor: 'pointer' }} onClick={handleExit} />
                     </div>
-                    <img src="/exit.png" alt="" style={{ width: '20px', cursor: 'pointer' }} onClick={handleExit} />
+
+
                 </div>
 
                 <div className={classes.mainForm_docs_title}>
