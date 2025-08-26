@@ -445,7 +445,6 @@ function Request_page({ children, ...props }) {
         setCurrentContract(null);
     };
 
-
     const GEN_REPORT = `
         mutation AddReportFromPayload($input: ReportPayloadInput!) {
             addReportFromPayload(input: $input) {
@@ -485,8 +484,6 @@ function Request_page({ children, ...props }) {
             setNotification({ message: "Ошибка при отправке данных", status: "error" });
         }
     };
-
-
 
     const UPDATE_STATE_REQUEST = `
         mutation Mutation($updateRequestId: ID!, $input: RequestUpdateInput!) {
@@ -547,11 +544,7 @@ function Request_page({ children, ...props }) {
         }
     };
 
-
-
-
     const [noteName, setNoteName] = useState("Название");
-    // const [noteDesc, setNoteDesc] = useState("");
 
     const [noteDesc, setNoteDesc] = useState("");
     const [savingNote, setSavingNote] = useState(false);
@@ -686,6 +679,84 @@ function Request_page({ children, ...props }) {
         scrollToBottom(true);
     }, [currentNotes?.notes?.length, isNotesModalOpen]);
 
+    const [sortColumn, setSortColumn] = useState('numberDate');
+    const [sortDirection, setSortDirection] = useState('desc');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    let stateMap = {
+        "created": "Создан",
+        "closing_ready": "Закрывающие готовы",
+        "agreement": "Согласование",
+        "waiting_payment": "Ждет оплаты",
+        "paid": "Оплачен"
+    };
+
+    const handleSort = (column) => {
+        let newSortDirection = 'asc';
+
+        if (sortColumn === column) {
+            newSortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        }
+
+        setSortColumn(column);
+        setSortDirection(newSortDirection);
+        sortDocuments(column, newSortDirection);
+    };
+
+    const parseNumberRU = (v) => {
+        if (v == null) return 0;
+        const s = String(v).replace(/\s/g, '').replace(/[₽Р]/g, '').replace(',', '.');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const parseDateRU = (v) => {
+        if (!v) return 0;
+        const [dd, mm, yyyy] = String(v).split('.');
+        return new Date(`${yyyy}-${mm}-${dd}`).getTime();
+    };
+
+    const normalize = (row, column) => {
+        switch (column) {
+            case 'shortName': return (row.shortName || '').toLowerCase();
+            case 'INN': return (row.INN || '').replace(/\D/g, '');
+            case 'phone': return (row.phone || '').replace(/\D/g, '');
+            case 'numberDate': return parseDateRU(row.numberDate);
+            case 'stoimostNumber': return parseNumberRU(row.stoimostNumber);
+            case 'state': return (row.state || '');
+            default: return '';
+        }
+    };
+
+    const sortDocuments = (column, direction) => {
+        const dir = direction === 'asc' ? 1 : -1;
+        const sorted = [...requests].sort((a, b) => {
+            const A = normalize(a, column);
+            const B = normalize(b, column);
+            if (A < B) return -1 * dir;
+            if (A > B) return 1 * dir;
+            return 0;
+        });
+        setRequests(sorted);
+    };
+
+    const renderSortArrow = (column) => {
+        if (sortColumn !== column) return null;
+        return sortDirection === 'asc' ? '↑' : '↓';
+    };
+
+    const filteredDocuments = requests.filter(doc => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+            doc?.shortName?.toLowerCase().includes(searchLower) ||
+            doc?.INN?.toLowerCase().includes(searchLower) ||
+            doc?.numberDate?.toLowerCase().includes(searchLower) ||
+            doc?.phone?.replace(/\s+/g, "").toLowerCase().includes(searchLower) ||
+            doc?.state?.toLowerCase().includes(searchLower) ||
+            doc?.stoimostNumber?.replace(/\s+/g, "").includes(searchLower)
+        );
+    });
+
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
@@ -699,8 +770,8 @@ function Request_page({ children, ...props }) {
                             type="text"
                             className={classes.searchInput}
                             placeholder="Поиск..."
-                        // value={searchQuery}
-                        // onChange={(e) => setSearchQuery(e.target.value)}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                     <img src="/exit.png" alt="" style={{ width: '20px', cursor: 'pointer' }} onClick={handleExit} />
@@ -710,53 +781,55 @@ function Request_page({ children, ...props }) {
                     <div className={classes.mainForm_docs_element}>
                         <div className={classes.mainForm_docs_element_info}>
                             <div className={classes.mainForm_docs_element_num} >№ </div>
-                            <div className={classes.mainForm_docs_element_name} >Наименование организации </div>
-                            <div className={classes.mainForm_docs_element_contr} >ИНН</div>
-                            <div className={classes.mainForm_docs_element_contr} >Телефон </div>
-                            <div className={classes.mainForm_docs_element_date} >Дата </div>
-                            <div className={classes.mainForm_docs_element_price} >Стоимость </div>
-                            <div className={classes.mainForm_docs_element_state} >Состояние </div>
+                            <div className={classes.mainForm_docs_element_name} onClick={() => handleSort('shortName')}>Наименование организации {renderSortArrow('shortName')}</div>
+                            <div className={classes.mainForm_docs_element_contr} onClick={() => handleSort('INN')}>ИНН {renderSortArrow('INN')}</div>
+                            <div className={classes.mainForm_docs_element_contr} onClick={() => handleSort('phone')}>Телефон  {renderSortArrow('phone')}</div>
+                            <div className={classes.mainForm_docs_element_date} onClick={() => handleSort('numberDate')}>Дата  {renderSortArrow('numberDate')}</div>
+                            <div className={classes.mainForm_docs_element_price} onClick={() => handleSort('stoimostNumber')}>Стоимость  {renderSortArrow('stoimostNumber')}</div>
+                            <div className={classes.mainForm_docs_element_state} onClick={() => handleSort('state')}>Состояние  {renderSortArrow('state')}</div>
                         </div>
                     </div>
                 </div>
 
-                <div className={classes.mainForm_docs}>
-                    {requests.map((req, index) => (
-                        <div key={req.id} className={classes.mainForm_docs_element}>
-                            <div className={classes.mainForm_docs_element_info}>
-                                <div className={classes.mainForm_docs_element_num}>{index + 1}</div>
-                                <div className={classes.mainForm_docs_element_name}>{req.shortName}</div>
-                                <div className={classes.mainForm_docs_element_contr}>{req.INN}</div>
-                                <div className={classes.mainForm_docs_element_contr}>{req.phone}</div>
-                                <div className={classes.mainForm_docs_element_date}>{req.numberDate ? req.numberDate : '-'}</div>
-                                <div className={classes.mainForm_docs_element_price}>{req.stoimostNumber ? req.stoimostNumber + ' ₽' : '-'}</div>
-                                <div className={classes.mainForm_docs_element_state}>
-                                    <select onChange={(e) => handleUpdateStateDocument(req.id, e.target.value)} value={req.state ?? "created"}>
-                                        <option value="created">Создан</option>
-                                        <option value="closing_ready">Закрывающие готовы</option>
-                                        <option value="agreement">Согласование</option>
-                                        <option value="waiting_payment">Ждет оплаты</option>
-                                        <option value="paid">Оплачен</option>
-                                    </select>
+                {!loading ?
+                    <div className={classes.mainForm_docs}>
+                        {filteredDocuments.map((req, index) => (
+                            <div key={req.id} className={classes.mainForm_docs_element}>
+                                <div className={classes.mainForm_docs_element_info}>
+                                    <div className={classes.mainForm_docs_element_num}>{index + 1}</div>
+                                    <div className={classes.mainForm_docs_element_name}>{req.shortName}</div>
+                                    <div className={classes.mainForm_docs_element_contr}>{req.INN}</div>
+                                    <div className={classes.mainForm_docs_element_contr}>{req.phone}</div>
+                                    <div className={classes.mainForm_docs_element_date}>{req.numberDate ? req.numberDate : '-'}</div>
+                                    <div className={classes.mainForm_docs_element_price}>{req.stoimostNumber ? req.stoimostNumber + ' ₽' : '-'}</div>
+                                    <div className={classes.mainForm_docs_element_state}>
+                                        <select onChange={(e) => handleUpdateStateDocument(req.id, e.target.value)} value={req.state ?? "created"}>
+                                            {
+                                                Object.entries(stateMap).map(([key, value]) => {
+                                                    return <option key={key} value={key}>{value}</option>;
+                                                })
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className={classes.mainForm_docs_element_btns}>
+                                    <div className={classes.iconMess}>
+                                        <img src="/chat.png" alt="Скачать" onClick={() => handleGetNotes(req.id)} />
+                                        {req.notes.length > 0 && <div className={classes.iconMess_count}>{req.notes.length}</div>}
+                                    </div>
+                                    <DocMenu type="download" request={req} onSelect={handleDownload}>
+                                        <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
+                                    </DocMenu>
+                                    <DocMenu type="create" request={req} onSelect={handleCreate}>
+                                        <img src="/dots.png" alt="Действия" className={classes.icon} />
+                                    </DocMenu>
+                                    <img className={classes.deleteIcon} src="/delete.png" alt="" onClick={() => handleDeleteDocument(req.id)} />
                                 </div>
                             </div>
-                            <div className={classes.mainForm_docs_element_btns}>
-                                <div className={classes.iconMess}>
-                                    <img src="/chat.png" alt="Скачать" onClick={() => handleGetNotes(req.id)} />
-                                    {req.notes.length > 0 &&<div className={classes.iconMess_count}>{req.notes.length}</div>}
-                                </div>
-                                <DocMenu type="download" request={req} onSelect={handleDownload}>
-                                    <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
-                                </DocMenu>
-                                <DocMenu type="create" request={req} onSelect={handleCreate}>
-                                    <img src="/dots.png" alt="Действия" className={classes.icon} />
-                                </DocMenu>
-                                <img className={classes.deleteIcon} src="/delete.png" alt="" onClick={() => handleDeleteDocument(req.id)} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
+                        ))}
+                    </div>
+                    : "Загрузка ..."
+                }
             </div>
 
             <Modal isOpen={isCounterpartyModalOpen} onClose={closeCounterpartyModal}>
