@@ -9,7 +9,7 @@ const httpLink = new HttpLink({
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: "ws://31.207.75.252:4000/graphql",
+    url: "wss://complexbackend.demoalazar.ru/graphql",
   })
 );
 
