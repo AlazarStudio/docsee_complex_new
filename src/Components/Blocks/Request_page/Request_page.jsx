@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from './Request_page.module.css';
 import axios from "axios";
 import Modal from '../Modal/Modal';
@@ -14,78 +14,80 @@ import { gql, useQuery, useSubscription } from "@apollo/client";
 
 
 const GET_REQUESTS = gql`
-        query Query {
-            requests {
-                items {
-                    id
-                    requestId
-                    orgName
-                    fullName
-                    shortName
-                    orgNameGen
-                    basis
-                    print
-                    post
-                    directorName
-                    directorFullNameGen
-                    initials
-                    address
-                    email
-                    bankName
-                    BIK
-                    INN
-                    KPP
-                    OGRN
-                    OGRNIP
-                    RSCH
-                    KSCH
-                    phone
-                    type
-                    filename
-                    filePath
-                    contractNumber
-                    contractJustNumber
-                    numberDate
-                    writtenDate
-                    writtenAmountAct
-                    writtenAmountDogovor
-                    stoimostNumber
-                    state
-                    createdAt
-                    updatedAt
-                    services {
-                        serviceId
-                        name
-                        quantity
-                        unit
-                        pricePerUnit
-                        vat
-                        totalPrice
-                    }
-                    acts {
-                        actsNumber
-                        contractType
-                        creationDate
-                        filename
-                        filePath
-                    }
-                    expenses {
-                        expensesNumber
-                        creationDate
-                        filename
-                        filePath
-                    }
-                    reports {
-                        creationDate
-                        filename
-                        filePath
-                    }
-                    requisites
-                    contractEndDate
-                    act_stoimostNumber
-                }
-            }
-            }
+    query Query {
+    requests {
+        id
+        requestId
+        orgName
+        fullName
+        requisites
+        shortName
+        orgNameGen
+        basis
+        print
+        post
+        directorName
+        directorFullNameGen
+        initials
+        address
+        email
+        bankName
+        BIK
+        INN
+        KPP
+        OGRN
+        OGRNIP
+        RSCH
+        KSCH
+        phone
+        type
+        filename
+        filePath
+        contractNumber
+        contractJustNumber
+        contractEndDate
+        numberDate
+        writtenDate
+        writtenAmountAct
+        act_stoimostNumber
+        writtenAmountDogovor
+        stoimostNumber
+        services {
+        serviceId
+        name
+        quantity
+        unit
+        pricePerUnit
+        vat
+        totalPrice
+        }
+        acts {
+        actsNumber
+        contractType
+        creationDate
+        filename
+        filePath
+        }
+        expenses {
+        expensesNumber
+        creationDate
+        filename
+        filePath
+        }
+        reports {
+        creationDate
+        filename
+        filePath
+        }
+        notes {
+        name
+        description
+        }
+        state
+        createdAt
+        updatedAt
+    }
+    }
 `;
 
 const REQUEST_UPDATED = gql`
@@ -111,8 +113,10 @@ function Request_page({ children, ...props }) {
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [isInvoiceModalDogovorOpen, setIsInvoiceModalDogovorOpen] = useState(false);
     const [currentContract, setCurrentContract] = useState(null);
+    const [currentNotes, setCurrentNotes] = useState(null);
     const [isActModalOpen, setIsActModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
 
     const [notification, setNotification] = useState({ message: "", status: "" });
 
@@ -120,29 +124,17 @@ function Request_page({ children, ...props }) {
         setNotification({ message: "", status: "" });
     };
 
-    // useEffect(() => {
-    //     axios.post("http://31.207.75.252:4000/", {
-    //         query: GET_REQUESTS,
-    //         variables: {}
-    //     })
-    //         .then(res => setRequests(res.data.data.requests.items))
-    //         .catch(err => console.error("Ошибка загрузки заявок", err));
-    // }, []);
-
     useEffect(() => {
-        if (data?.requests?.items) {
-            setRequests(data.requests.items);
+        if (data?.requests) {
+            setRequests(data.requests);
         }
     }, [data]);
 
     useSubscription(REQUEST_UPDATED, {
         onData: ({ client, data }) => {
-            // можно точечно обновлять, но безопаснее рефетчнуть (быстро и просто)
             refetch();
         },
     });
-
-    // console.log(requests)
 
     const openCounterpartyModal = () => {
         setIsCounterpartyModalOpen(true);
@@ -168,16 +160,12 @@ function Request_page({ children, ...props }) {
         closeCounterpartyModal();
     };
 
-
     const handleExit = () => {
         localStorage.clear();
         window.location.reload();
     }
 
     const handleCreate = (kind, req) => {
-        // TODO: сюда подключи GraphQL mutation создания
-        // kind: 'contract' | 'act' | 'invoice' | 'report'
-
         if (kind === 'invoice') {
             openInvoiceModal(req);
         }
@@ -256,7 +244,6 @@ function Request_page({ children, ...props }) {
             expense_number: data.expenseNumber
         };
 
-        // console.log(formData)
         try {
             const response = await axios.post("http://31.207.75.252:4000/graphql", {
                 query: GEN_EXPENCE,
@@ -266,17 +253,12 @@ function Request_page({ children, ...props }) {
             });
 
             const data = response.data.data.addExpenseFromPayload;
-            // console.log("Сгенерирован счет:", data);
             data && closeInvoiceModal();
-            // fetchDocuments();
 
             setNotification({ message: `Счет для документа ${formData.contractName} успешно создан`, status: "success" });
-            // alert(`Счет для документа ${formData.contractName} успешно создан`);
-            // setIsFetch(prev => !prev)
         } catch (error) {
             console.error("Ошибка запроса", error);
             setNotification({ message: "Ошибка при отправке данных", status: "error" });
-            // alert('Ошибка при отправке данных');
         }
     };
 
@@ -358,8 +340,6 @@ function Request_page({ children, ...props }) {
             services: data.services,
         };
 
-        // console.log('formData', formData);
-
         try {
             const response = await axios.post("http://31.207.75.252:4000/graphql", {
                 query: GEN_CONTRACT,
@@ -370,21 +350,15 @@ function Request_page({ children, ...props }) {
             });
 
             const data = response.data.data.updateRequest;
-            // console.log("Сгенерирован контракт:", data);
 
             data && closeInvoiceDogovorModal();
-            // fetchDocuments();
 
             setNotification({ message: `Договор успешно создан`, status: "success" });
-            // alert(`Счет для документа ${formData.contractName} успешно создан`);
-            // setIsFetch(prev => !prev)
         } catch (error) {
             console.error("Ошибка запроса", error);
             setNotification({ message: "Ошибка при отправке данных", status: "error" });
-            // alert('Ошибка при отправке данных');
         }
     };
-
 
     const openActModal = (contract) => {
         setCurrentContract(contract);
@@ -395,7 +369,6 @@ function Request_page({ children, ...props }) {
         setIsActModalOpen(false);
         setCurrentContract(null);
     };
-
 
     const GEN_ACT = `
         mutation AddActFromPayload($input: ActPayloadInput!) {
@@ -444,7 +417,6 @@ function Request_page({ children, ...props }) {
             idRequest: currentContract.id
         };
 
-        // console.log(formData)
         try {
             const response = await axios.post("http://31.207.75.252:4000/graphql", {
                 query: GEN_ACT,
@@ -454,21 +426,14 @@ function Request_page({ children, ...props }) {
             });
 
             const data = response.data.data.addActFromPayload;
-            // console.log("Сгенерирован акт:", data);
             data && closeActModal();
-            // fetchDocuments();
             setNotification({ message: `Акт для документа ${formData.contractName} успешно создан`, status: "success" });
-            // alert(`Акт для документа ${formData.contractName} успешно создан`);
-            // setIsFetch(prev => !prev)
         } catch (error) {
             console.error("Ошибка запроса", error);
 
             setNotification({ message: "Ошибка при отправке данных", status: "error" });
-            // alert('Ошибка при отправке данных');
         }
     };
-
-
 
     const openReportModal = (contract) => {
         setCurrentContract(contract);
@@ -492,7 +457,6 @@ function Request_page({ children, ...props }) {
     const handleReportSubmit = async (data) => {
         const formData = {
             creationDate: data.date,
-            // reportTemplate: data.reportTemplate,
             contractName: currentContract.filename,
             idRequest: currentContract.id,
             receiver_orgNameGen: currentContract.directorFullNameGen,
@@ -503,7 +467,6 @@ function Request_page({ children, ...props }) {
             stoimostNumber: currentContract.stoimostNumber,
         };
 
-        // console.log(formData)
         try {
             const response = await axios.post("http://31.207.75.252:4000/graphql", {
                 query: GEN_REPORT,
@@ -513,20 +476,215 @@ function Request_page({ children, ...props }) {
             });
 
             const data = response.data.data.addReportFromPayload;
-            // console.log("Сгенерирован отчет:", data);     
 
 
             data && closeReportModal();
-            // fetchDocuments();
             setNotification({ message: `Отчет для документа ${formData.contractName} успешно создан`, status: "success" });
-            // alert(`Отчет для документа ${formData.contractName} успешно создан`);
-            // setIsFetch(prev => !prev)
         } catch (error) {
             console.error("Ошибка запроса", error);
             setNotification({ message: "Ошибка при отправке данных", status: "error" });
-            // alert('Ошибка при отправке данных');
         }
     };
+
+
+
+    const UPDATE_STATE_REQUEST = `
+        mutation Mutation($updateRequestId: ID!, $input: RequestUpdateInput!) {
+            updateRequest(id: $updateRequestId, input: $input) {
+                state
+            }
+        }
+    `;
+
+    const handleUpdateStateDocument = async (id, state) => {
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: UPDATE_STATE_REQUEST,
+                variables: {
+                    "updateRequestId": id,
+                    "input": {
+                        "state": state
+                    }
+                }
+            });
+
+            const data = response.data.data.updateRequest;
+
+            data && setNotification({ message: `Статус успешно обновлен`, status: "success" });
+
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+
+        }
+    };
+
+    const DELETE_REQUEST = `
+        mutation DeleteRequest($deleteRequestId: ID!) {
+            deleteRequest(id: $deleteRequestId) {
+                id
+            }
+        }
+    `;
+
+    const handleDeleteDocument = async (id) => {
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: DELETE_REQUEST,
+                variables: {
+                    "deleteRequestId": id
+                }
+            });
+
+            const data = response.data.data.deleteRequest;
+
+            data && setNotification({ message: `Заявка успешно удалена`, status: "success" });
+
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+
+        }
+    };
+
+
+
+
+    const [noteName, setNoteName] = useState("Название");
+    // const [noteDesc, setNoteDesc] = useState("");
+
+    const [noteDesc, setNoteDesc] = useState("");
+    const [savingNote, setSavingNote] = useState(false);
+
+    function getNow() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, "0");
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const yyyy = now.getFullYear();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const min = String(now.getMinutes()).padStart(2, "0");
+        return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+    }
+
+    async function handleAddNote() {
+        const desc = noteDesc.trim();
+        if (!desc || !currentNotes?.id) return;
+
+        const newNote = { name: getNow(), description: desc };
+
+        // оптимистично обновим UI
+        const prevNotes = currentNotes.notes || [];
+        const updatedNotes = [...prevNotes, newNote];
+        setCurrentNotes(prev => ({ ...prev, notes: updatedNotes }));
+        setNoteDesc("");
+        setSavingNote(true);
+
+        try {
+            await handleUpdateNotesDocument(currentNotes.id, updatedNotes);
+            // успех — уже всё в state
+        } catch (e) {
+            // откатываем
+            setCurrentNotes(prev => ({ ...prev, notes: prevNotes }));
+        } finally {
+            setSavingNote(false);
+        }
+    }
+
+    const UPDATE_NOTES = `
+        mutation UpdateRequest($updateRequestId: ID!, $input: RequestUpdateInput!) {
+            updateRequest(id: $updateRequestId, input: $input) {
+                notes {
+                    name
+                    description
+                }
+            }
+        }
+    `;
+
+    const handleUpdateNotesDocument = async (id, notes) => {
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: UPDATE_NOTES,
+                variables: {
+                    "updateRequestId": id,
+                    "input": {
+                        "notes": notes
+                    }
+                }
+            });
+
+            const data = response.data.data.updateRequest;
+
+            // console.log(id)
+
+            // data && setNotification({ message: `Заметки успешно обновлены`, status: "success" });
+
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+            setNotification({ message: "Ошибка при отправке данных", status: "error" });
+
+        }
+    };
+
+    const GET_NOTES = `
+        query Query($requestId: ID!) {
+            request(id: $requestId) {
+                id,
+                notes {
+                    name
+                    description
+                }
+            }
+        }
+    `;
+
+    const handleGetNotes = async (id) => {
+        try {
+            const response = await axios.post("http://31.207.75.252:4000/graphql", {
+                query: GET_NOTES,
+                variables: {
+                    "requestId": id,
+                }
+            });
+
+            const data = response.data.data.request;
+
+            openNotesModal(data)
+
+        } catch (error) {
+            console.error("Ошибка запроса", error);
+
+        }
+    };
+
+    const openNotesModal = (contract) => {
+        setCurrentNotes(contract)
+        setIsNotesModalOpen(true);
+    };
+
+    const closeNotesModal = () => {
+        setIsNotesModalOpen(false);
+        setCurrentContract(null);
+    };
+
+    const notesEndRef = useRef(null);
+    const listRef = useRef(null);
+
+    function scrollToBottom(smooth = true) {
+        const el = listRef.current;
+        if (!el) return;
+        el.scrollTop = el.scrollHeight;
+    }
+
+    useEffect(() => {
+        if (!isNotesModalOpen) return;
+        requestAnimationFrame(() => scrollToBottom(false));
+    }, [isNotesModalOpen]);
+
+    useEffect(() => {
+        if (!isNotesModalOpen) return;
+        scrollToBottom(true);
+    }, [currentNotes?.notes?.length, isNotesModalOpen]);
 
     return (
         <div className={classes.main}>
@@ -562,7 +720,6 @@ function Request_page({ children, ...props }) {
                     </div>
                 </div>
 
-                {/* Рендеринг документов, сгруппированных по состояниям */}
                 <div className={classes.mainForm_docs}>
                     {requests.map((req, index) => (
                         <div key={req.id} className={classes.mainForm_docs_element}>
@@ -574,23 +731,27 @@ function Request_page({ children, ...props }) {
                                 <div className={classes.mainForm_docs_element_date}>{req.numberDate ? req.numberDate : '-'}</div>
                                 <div className={classes.mainForm_docs_element_price}>{req.stoimostNumber ? req.stoimostNumber + ' ₽' : '-'}</div>
                                 <div className={classes.mainForm_docs_element_state}>
-                                    <select>
+                                    <select onChange={(e) => handleUpdateStateDocument(req.id, e.target.value)} value={req.state ?? "created"}>
                                         <option value="created">Создан</option>
-                                        <option value="Закрывающие готовы">Закрывающие готовы</option>
-                                        <option value="Согласование">Согласование</option>
-                                        <option value="Ждет оплаты">Ждет оплаты</option>
-                                        <option value="Оплачен">Оплачен</option>
+                                        <option value="closing_ready">Закрывающие готовы</option>
+                                        <option value="agreement">Согласование</option>
+                                        <option value="waiting_payment">Ждет оплаты</option>
+                                        <option value="paid">Оплачен</option>
                                     </select>
                                 </div>
                             </div>
                             <div className={classes.mainForm_docs_element_btns}>
+                                <div className={classes.iconMess}>
+                                    <img src="/chat.png" alt="Скачать" onClick={() => handleGetNotes(req.id)} />
+                                    {req.notes.length > 0 &&<div className={classes.iconMess_count}>{req.notes.length}</div>}
+                                </div>
                                 <DocMenu type="download" request={req} onSelect={handleDownload}>
                                     <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
                                 </DocMenu>
                                 <DocMenu type="create" request={req} onSelect={handleCreate}>
                                     <img src="/dots.png" alt="Действия" className={classes.icon} />
                                 </DocMenu>
-                                <img className={classes.deleteIcon} src="/delete.png" alt="" />
+                                <img className={classes.deleteIcon} src="/delete.png" alt="" onClick={() => handleDeleteDocument(req.id)} />
                             </div>
                         </div>
                     ))}
@@ -618,8 +779,125 @@ function Request_page({ children, ...props }) {
                 <CreateReportForm onSubmit={handleReportSubmit} currentContract={currentContract} onClose={closeReportModal} />
             </Modal>
 
+            <Modal isOpen={isNotesModalOpen} onClose={closeNotesModal}>
+                <div style={{ display: "grid", gap: 12, minWidth: 420 }}>
+                    <div style={{ fontSize: 18, fontWeight: 600 }}>Примечания</div>
+
+                    <div
+                        ref={listRef}
+                        style={{
+                            display: "grid",
+                            gap: 10,
+                            maxHeight: 280,
+                            overflowY: "auto",
+                            paddingRight: 6,
+                        }}
+                    >
+                        {currentNotes?.notes?.length ? (
+                            currentNotes.notes.map((note, i) => (
+                                <div
+                                    key={i}
+                                    style={{
+                                        border: "1px solid #e5e7eb",
+                                        borderRadius: 12,
+                                        padding: "10px 12px",
+                                        background: "#fff",
+                                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            fontSize: 12,
+                                            color: "#6b7280",
+                                            marginBottom: 4,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6,
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                width: 6,
+                                                height: 6,
+                                                borderRadius: "50%",
+                                                background: "#10b981",
+                                                display: "inline-block",
+                                            }}
+                                        />
+                                        {note.name}
+                                    </div>
+                                    <div style={{ fontSize: 14, color: "#111827", whiteSpace: "pre-wrap" }}>
+                                        {note.description}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div
+                                style={{
+                                    color: "#6b7280",
+                                    fontSize: 14,
+                                    padding: "8px 0",
+                                }}
+                            >
+                                Нет примечаний
+                            </div>
+                        )}
+
+                        <div ref={notesEndRef} />
+                    </div>
+
+                    <div
+                        style={{
+                            display: "grid",
+                            gap: 8,
+                            borderTop: "1px solid #e5e7eb",
+                            paddingTop: 12,
+                        }}
+                    >
+                        <label style={{ fontSize: 13, color: "#374151" }}>Новое примечание</label>
+                        <textarea
+                            placeholder="Описание примечания"
+                            rows={3}
+                            value={noteDesc}
+                            onChange={(e) => setNoteDesc(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAddNote();
+                            }}
+                            style={{
+                                width: "100%",
+                                border: "1px solid #d1d5db",
+                                borderRadius: 8,
+                                padding: 10,
+                                fontSize: 14,
+                                outline: "none",
+                            }}
+                        />
+                        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                            <button
+                                type="button"
+                                onClick={handleAddNote}
+                                disabled={savingNote || !noteDesc.trim()}
+                                style={{
+                                    background: savingNote ? "#9ca3af" : "#111827",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: 8,
+                                    padding: "8px 14px",
+                                    fontSize: 14,
+                                    cursor: savingNote || !noteDesc.trim() ? "not-allowed" : "pointer",
+                                    transition: "opacity .2s",
+                                }}
+                                title="Ctrl/Cmd + Enter для добавления"
+                            >
+                                {savingNote ? "Сохранение..." : "Добавить"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
             <Notification message={notification.message} status={notification.status} clearNotification={clearNotification} />
-        </div >
+        </div>
     );
 }
 

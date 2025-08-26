@@ -257,3 +257,31 @@
     margin-top: 20px;
     margin-bottom: 20px;
 }
+
+.iconMess{
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+    position: relative;
+}
+
+.iconMess_count{
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background-color: rgb(16, 185, 129);
+    color: white;
+    border-radius: 10px;
+    min-width: 20px;
+    min-height: 20px;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.iconMess img{
+    height: 26px;
+    cursor: pointer;
+}
