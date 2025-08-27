@@ -117,6 +117,7 @@ function Request_page({ children, ...props }) {
     const [isActModalOpen, setIsActModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const [notification, setNotification] = useState({ message: "", status: "" });
 
@@ -745,6 +746,7 @@ function Request_page({ children, ...props }) {
 
     const normalize = (row, column) => {
         switch (column) {
+            case 'order': return parseNumberRU(row.order);
             case 'shortName': return (row.shortName || '').toLowerCase();
             case 'INN': return (row.INN || '').replace(/\D/g, '');
             case 'phone': return (row.phone || '').replace(/\D/g, '');
@@ -824,6 +826,9 @@ function Request_page({ children, ...props }) {
                     <img src="/chat.png" alt="Примечания" onClick={() => handleGetNotes(req.id)} />
                     {!!req.notes?.length && <div className={classes.iconMess_count}>{req.notes.length}</div>}
                 </div>
+
+                <img src="/editRequest.png" alt="Скачать" className={classes.icon} onClick={() => { setCurrentContract(req); openCounterpartyModal(); setIsEditMode(true) }} />
+
                 <DocMenu type="download" request={req} onSelect={handleDownload}>
                     <img src="/download_doc.png" alt="Скачать" className={classes.icon} />
                 </DocMenu>
@@ -847,12 +852,14 @@ function Request_page({ children, ...props }) {
     const totalReq = requests.length;
     const totalCost = requests.reduce((sum, req) => sum + parseNumberRU(req.stoimostNumber), 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+
+    // console.log(currentContract)
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
                 <div className={classes.mainForm_buttons}>
                     <div className={classes.mainForm_buttons_elem}>
-                        <div className={classes.mainForm_buttons_btn} onClick={openCounterpartyModal}>Создать заявку</div>
+                        <div className={classes.mainForm_buttons_btn} onClick={() => { openCounterpartyModal(); setIsEditMode(false); }}>Создать заявку</div>
                     </div>
 
                     <div className={classes.mainForm_buttons_stat}>
@@ -879,7 +886,7 @@ function Request_page({ children, ...props }) {
                 <div className={classes.mainForm_docs_title}>
                     <div className={classes.mainForm_docs_element}>
                         <div className={classes.mainForm_docs_element_info}>
-                            <div className={classes.mainForm_docs_element_num} >№ </div>
+                            <div className={classes.mainForm_docs_element_num} onClick={() => handleSort('order')}>№ {renderSortArrow('order')}</div>
                             <div className={classes.mainForm_docs_element_name} onClick={() => handleSort('shortName')}>Наименование организации {renderSortArrow('shortName')}</div>
                             <div className={classes.mainForm_docs_element_contr} onClick={() => handleSort('INN')}>ИНН {renderSortArrow('INN')}</div>
                             <div className={classes.mainForm_docs_element_contr} onClick={() => handleSort('phone')}>Телефон  {renderSortArrow('phone')}</div>
@@ -911,7 +918,7 @@ function Request_page({ children, ...props }) {
             </div>
 
             <Modal isOpen={isCounterpartyModalOpen} onClose={closeCounterpartyModal}>
-                <AddCounterparty onSubmit={handleCounterpartySubmit} />
+                <AddCounterparty onSubmit={handleCounterpartySubmit} currentContract={currentContract} isEditMode={isEditMode} setNotification={setNotification}/>
             </Modal>
 
             <Modal isOpen={isInvoiceModalOpen} onClose={closeInvoiceModal}>
