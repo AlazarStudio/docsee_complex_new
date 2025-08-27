@@ -69,12 +69,12 @@ const Login = ({ currentUser, setCurrentUser }) => {
                     gap: 2,
                 }}
             >
-                <Box
+                {/* <Box
                     component="img"
                     src="/favicon-alazar-studio.png"
                     alt="Логотип"
                     sx={{ width: "100px", height: "100px", borderRadius: '10px' }}
-                />
+                /> */}
                 <Typography variant="h5" component="h1" fontWeight="bold">
                     Вход
                 </Typography>

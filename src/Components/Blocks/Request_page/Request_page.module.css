@@ -223,6 +223,10 @@
     background-color: #fcfcfc;
 }
 
+.blueStateProgress {
+    background-color: rgba(144, 144, 252, 0.2);
+}
+
 .blueState {
     background-color: rgba(0, 0, 255, 0.2);
 }
@@ -241,6 +245,10 @@
 
 .grayState:hover {
     background-color: #f3f3f3;
+}
+
+.blueStateProgress:hover {
+    background-color: rgba(144, 144, 252, 0.3);
 }
 
 .blueState:hover {

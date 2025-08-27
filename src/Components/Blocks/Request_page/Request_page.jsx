@@ -705,16 +705,18 @@ function Request_page({ children, ...props }) {
 
     let stateMap = {
         "created": "Создан",
+        "in_progress": "В работе",
+        "in_production": "В производстве",
         "closing_ready": "Закрывающие готовы",
-        "agreement": "Согласование",
         "waiting_payment": "Ждет оплаты",
         "paid": "Оплачен"
     };
 
     const stateClassMap = {
         created: classes.grayState,
-        closing_ready: classes.blueState,
-        agreement: classes.yellowState,
+        in_progress: classes.blueStateProgress,
+        in_production: classes.blueState,
+        closing_ready: classes.yellowState,
         waiting_payment: classes.orangeState,
         paid: classes.greenState,
     };

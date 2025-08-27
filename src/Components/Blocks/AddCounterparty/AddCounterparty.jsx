@@ -7,7 +7,7 @@ import SelfEmployedCounterpartyForm from '../SelfEmployedCounterpartyForm/SelfEm
 import axios from 'axios';
 
 function AddCounterparty({ onSubmit, currentContract, isEditMode = false, setNotification }) {
-    console.log(isEditMode)
+    // console.log(isEditMode)
     const [counterpartyType, setCounterpartyType] = useState(currentContract?.type || '');
 
     // Состояние для Гос контрагента
@@ -316,7 +316,7 @@ function AddCounterparty({ onSubmit, currentContract, isEditMode = false, setNot
 
     return (
         <>
-            <h2>Добавление нового контрагента</h2>
+            <h2>{isEditMode ? `Редактирование заявки` : `Добавление новой заявки`}</h2>
             <form className={classes.modalForm} onSubmit={handleSubmit}>
                 <div>
                     <label>Тип контрагента</label>
