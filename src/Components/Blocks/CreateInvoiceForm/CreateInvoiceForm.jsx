@@ -43,8 +43,10 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 
 function CreateInvoiceForm({ onSubmit, currentContract, onClose }) {
+    let expenceNextNum = `C${currentContract?.expenses.length + 1 || 1}-${currentContract?.contractNumber}`
     const [creationDate, setCreationDate] = useState('');
-    const [expenseNumber, setExpenseNumber] = useState('');
+    const [expenseNumber, setExpenseNumber] = useState(expenceNextNum || '');
+    const [padlock, setPadlock] = useState(true);
 
     const [services, setServices] = useState(
         currentContract?.services?.length
@@ -162,7 +164,7 @@ function CreateInvoiceForm({ onSubmit, currentContract, onClose }) {
         <>
             <h2>Создание нового счета для документа</h2>
             <form className={classes.modalForm} onSubmit={handleSubmit}>
-                <div>
+                <div style={{ position: 'relative' }}>
                     <label>Номер счета:</label>
                     <input
                         type="text"
@@ -170,7 +172,9 @@ function CreateInvoiceForm({ onSubmit, currentContract, onClose }) {
                         placeholder='Введите номер счета'
                         onChange={(e) => setExpenseNumber(e.target.value)}
                         required={true}
+                        disabled={padlock}
                     />
+                    <img src="padlock.png" alt="" className={classes.padlockIcon} onClick={() => setPadlock(!padlock)} />
                 </div>
 
                 <div>

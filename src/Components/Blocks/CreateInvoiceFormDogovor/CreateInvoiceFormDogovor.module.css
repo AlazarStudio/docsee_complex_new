@@ -138,3 +138,13 @@
     font-size: 14px;
     outline: none;
 }
+
+.padlockIcon{
+    width: 15px;
+    height: 15px;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}

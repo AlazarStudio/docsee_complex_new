@@ -42,8 +42,10 @@ const toNum = (v) => {
 const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 function CreateActForm({ onSubmit, currentContract, onClose }) {
+    let actNextNum = `А${currentContract?.acts.length + 1 || 1}-${currentContract?.contractNumber}`
     const [creationDate, setCreationDate] = useState('');
-    const [actNumber, setActNumber] = useState('');
+    const [actNumber, setActNumber] = useState(actNextNum || '');
+    const [padlock, setPadlock] = useState(true);
 
     const [services, setServices] = useState(
         currentContract?.services?.length
@@ -158,7 +160,7 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
         <>
             <h2>Создание нового акта для договора</h2>
             <form className={classes.modalForm} onSubmit={handleSubmit}>
-                <div>
+                <div  style={{ position: 'relative' }}>
                     <label>Номер акта:</label>
                     <input
                         type="text"
@@ -166,7 +168,9 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
                         placeholder='Введите номер акта'
                         onChange={(e) => setActNumber(e.target.value)}
                         required={true}
+                        disabled={padlock}
                     />
+                    <img src="padlock.png" alt="" className={classes.padlockIcon} onClick={() => setPadlock(!padlock)} />
                 </div>
 
                 <div>

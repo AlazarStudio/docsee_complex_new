@@ -42,7 +42,8 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 
 function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
-    const [contractNumber, setContractNumber] = useState(currentContract?.contractNumber || '');
+    let dogovorNextNum = `К-${currentContract?.order || 1}-25`
+    const [contractNumber, setContractNumber] = useState(currentContract?.contractNumber || dogovorNextNum);
     const [creationDate, setCreationDate] = useState(currentContract?.numberDate ? formatDate(currentContract?.numberDate) : '');
     const [contractEndDate, setContractEndDate] = useState(currentContract?.contractEndDate ? formatHumanDate(currentContract?.contractEndDate) : '2025-12-25');
 
@@ -63,6 +64,7 @@ function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
 
     const [act_stoimostNumber, setAct_stoimostNumber] = useState(currentContract?.act_stoimostNumber || '');
     const [act_writtenAmountAct, setAct_writtenAmountAct] = useState(currentContract?.writtenAmountAct || '');
+    const [padlock, setPadlock] = useState(true);
 
     function getDate(dateInfo, type = 'numeric') {
         const date = new Date(dateInfo);
@@ -179,7 +181,7 @@ function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
         <>
             <h2>Создание нового договора</h2>
             <form className={classes.modalForm} onSubmit={handleSubmit}>
-                <div>
+                <div style={{position: 'relative'}}>
                     <label>Номер договора:</label>
                     <input
                         type="text"
@@ -187,7 +189,9 @@ function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
                         placeholder='Введите номер договора'
                         onChange={(e) => setContractNumber(e.target.value)}
                         required={true}
+                        disabled={padlock}
                     />
+                    <img src="padlock.png" alt="" className={classes.padlockIcon} onClick={() => setPadlock(!padlock)} />
                 </div>
                 <div>
                     <label>Дата:</label>

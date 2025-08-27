@@ -900,7 +900,7 @@ function Request_page({ children, ...props }) {
                 </div>
 
                 {!loading ?
-                    <div className={classes.mainForm_docs}>
+                    <div className={classes.mainForm_docs} style={{ paddingBottom: 50 }}>
                         {stateOrder.map((key) => (
                             <section key={key} className={classes.groupSection}>
                                 {groups[key].length > 0 && (
@@ -920,7 +920,7 @@ function Request_page({ children, ...props }) {
             </div>
 
             <Modal isOpen={isCounterpartyModalOpen} onClose={closeCounterpartyModal}>
-                <AddCounterparty onSubmit={handleCounterpartySubmit} currentContract={currentContract} isEditMode={isEditMode} setNotification={setNotification}/>
+                <AddCounterparty onSubmit={handleCounterpartySubmit} currentContract={currentContract} isEditMode={isEditMode} setNotification={setNotification} />
             </Modal>
 
             <Modal isOpen={isInvoiceModalOpen} onClose={closeInvoiceModal}>
@@ -1060,9 +1060,12 @@ function Request_page({ children, ...props }) {
                 <div className={classes.downloadModal}>
                     <h3>Выберите файл для скачивания:</h3>
                     <ul>
-                        {filesToDownload.sort(
-                            (a, b) => parseDateRU(b.creationDate) - parseDateRU(a.creationDate)
-                        ).map((file, index) => (
+                        {filesToDownload
+                        .sort((a, b) => {
+                            const dateDiff = parseDateRU(b.creationDate) - parseDateRU(a.creationDate);
+                            if (dateDiff !== 0) return dateDiff;
+                            return b.filename.localeCompare(a.filename, 'ru');
+                        }).map((file, index) => (
                             <li key={index} onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = `https://complexbackend.demoalazar.ru${file.filePath}`;

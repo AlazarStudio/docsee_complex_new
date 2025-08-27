@@ -289,7 +289,7 @@ function AddCounterparty({ onSubmit, currentContract, isEditMode = false, setNot
         `;
 
         try {
-            if (currentContract.id) {
+            if (isEditMode) {
                 await axios.post("https://complexbackend.demoalazar.ru/graphql", {
                     query: UPDATE_REQUEST,
                     variables: {
@@ -307,7 +307,7 @@ function AddCounterparty({ onSubmit, currentContract, isEditMode = false, setNot
             }
 
             // currentContract.id ? alert(`Контрагент успешно обновлён`) : alert(`Контрагент успешно создан`);
-            setNotification({ message: currentContract.id ? `Контрагент успешно обновлён` : `Контрагент успешно создан`, status: "success" });
+            setNotification({ message: isEditMode ? `Контрагент успешно обновлён` : `Контрагент успешно создан`, status: "success" });
         } catch (error) {
             console.error("Ошибка запроса", error);
             alert('Ошибка при отправке данных');
