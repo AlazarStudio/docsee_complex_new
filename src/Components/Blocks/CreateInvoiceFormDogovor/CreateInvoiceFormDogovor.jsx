@@ -62,6 +62,8 @@ function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
             : [{ serviceId: 1, name: "", quantity: 1, unit: "шт.", pricePerUnit: 0, vat: "Без НДС", totalPrice: 0 }]
     );
 
+    // console.log(services)
+
     const [act_stoimostNumber, setAct_stoimostNumber] = useState(currentContract?.act_stoimostNumber || '');
     const [act_writtenAmountAct, setAct_writtenAmountAct] = useState(currentContract?.writtenAmountAct || '');
     const [padlock, setPadlock] = useState(true);
@@ -139,6 +141,8 @@ function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
             const quantity = parseFloat(newServices[index].quantity) || 0;
             const pricePerUnit = parseFloat(newServices[index].pricePerUnit).toFixed(2) || 0;
             newServices[index].totalPrice = (quantity * pricePerUnit).toFixed(2);
+
+            newServices[index]["quantity"] = quantity
         }
 
         setServices(newServices);
@@ -173,7 +177,7 @@ function CreateInvoiceFormDogovor({ onSubmit, currentContract, onClose }) {
                 setAct_writtenAmountAct(sumForDogovor);
             }
         } else {
-            console.error("Error: sumForDogovor is not a string", sumForDogovor);
+            // console.error("Error: sumForDogovor is not a string", sumForDogovor);
         }
     };
 
