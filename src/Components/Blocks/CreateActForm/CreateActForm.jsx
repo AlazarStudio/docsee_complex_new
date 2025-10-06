@@ -56,7 +56,7 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
                 unit: s.unit ?? "шт.",
                 pricePerUnit: toNum(s.pricePerUnit),
                 vat: s.vat ?? "Без НДС",
-                totalPrice: round2(toNum(s.totalPrice) || (toNum(s.quantity) * toNum(s.pricePerUnit))),
+                totalPrice: toNum(s.totalPrice) || (toNum(s.quantity) * toNum(s.pricePerUnit)),
             }))
             : [{ serviceId: 1, name: "", quantity: 1, unit: "шт.", pricePerUnit: 0, vat: "Без НДС", totalPrice: 0 }]
     );
@@ -77,11 +77,11 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
             ...s,
             pricePerUnit: Number(s.pricePerUnit).toLocaleString('ru-RU', {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                maximumFractionDigits: 10,
             }),
             totalPrice: Number(s.totalPrice).toLocaleString('ru-RU', {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                maximumFractionDigits: 10,
             }),
         }));
 
@@ -117,15 +117,15 @@ function CreateActForm({ onSubmit, currentContract, onClose }) {
 
         if (field === 'quantity' || field === 'pricePerUnit') {
             const quantity = parseFloat(newServices[index].quantity) || 0;
-            const pricePerUnit = parseFloat(newServices[index].pricePerUnit).toFixed(2) || 0;
-            newServices[index].totalPrice = (quantity * pricePerUnit).toFixed(2);
+            const pricePerUnit = parseFloat(newServices[index].pricePerUnit) || 0;
+            newServices[index].totalPrice = (quantity * pricePerUnit);
         }
 
         setServices(newServices);
 
         const totalAmount = newServices.reduce((sum, service) => {
             return sum + parseFloat(service.totalPrice || 0);
-        }, 0).toFixed(2);
+        }, 0).toFixed(3);
 
         setAct_stoimostNumber(totalAmount.replace('.', ','));
 
