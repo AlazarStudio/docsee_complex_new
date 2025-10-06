@@ -852,7 +852,7 @@ function Request_page({ children, ...props }) {
     };
 
     const totalReq = requests.length;
-    const totalCost = requests.reduce((sum, req) => sum + parseNumberRU(req.stoimostNumber), 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const totalCost = requests.reduce((sum, req) => sum + parseNumberRU(req.stoimostNumber), 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 10 });
 
 
     // console.log(currentContract)
