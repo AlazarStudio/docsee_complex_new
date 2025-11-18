@@ -243,6 +243,14 @@
     background-color: rgba(0, 128, 0, 0.2);
 }
 
+.redState {
+    background-color: rgba(255, 0, 0, 0.3);
+}
+
+.darkGrayState {
+    background-color: rgba(160, 160, 160, 0.5);
+}
+
 .grayState:hover {
     background-color: #f3f3f3;
 }
@@ -265,6 +273,14 @@
 
 .greenState:hover {
     background-color: rgba(0, 128, 0, 0.3);
+}
+
+.redState:hover {
+    background-color: rgba(255, 0, 0, 0.4);
+}
+
+.darkGrayState:hover {
+    background-color: rgba(160, 160, 160, 0.6);
 }
 
 .documentGroup {

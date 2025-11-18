@@ -709,7 +709,9 @@ function Request_page({ children, ...props }) {
         "in_production": "В производстве",
         "closing_ready": "Закрывающие готовы",
         "waiting_payment": "Ждет оплаты",
-        "paid": "Оплачен"
+        "paid": "Оплачен",
+        "waiting": "Ожидание",
+        "no_answer": "Нет ответа"
     };
 
     const stateClassMap = {
@@ -719,6 +721,8 @@ function Request_page({ children, ...props }) {
         closing_ready: classes.yellowState,
         waiting_payment: classes.orangeState,
         paid: classes.greenState,
+        waiting: classes.darkGrayState,
+        no_answer: classes.redState,
     };
 
     const handleSort = (column) => {
