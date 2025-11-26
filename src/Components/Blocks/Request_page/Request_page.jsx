@@ -869,10 +869,10 @@ function Request_page({ children, ...props }) {
                     </div>
 
                     <div className={classes.mainForm_buttons_stat}>
-                        Заявок: {totalReq}
+                        Заявок: {totalReq} / 50
                     </div>
                     <div className={classes.mainForm_buttons_stat}>
-                        Сумма: {totalCost} ₽
+                        Сумма: {totalCost} ₽ / 1 745 500 ₽
                     </div>
 
                     <div className={classes.mainForm_buttons_search}>
