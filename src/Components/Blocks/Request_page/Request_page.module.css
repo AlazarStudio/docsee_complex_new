@@ -33,6 +33,54 @@
 
 .mainForm_buttons_stat{
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.mainForm_buttons_stat_img{
+    display: flex;
+    align-items: center;
+}
+
+.mainForm_buttons_stat_img img{
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.mainForm_buttons_stat_info_block{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #cecece;
+    padding-bottom: 10px;
+}
+
+.mainForm_buttons_stat_info_block:last-child{
+    border-bottom: none;
+    padding-bottom: 0px;
+}
+
+.mainForm_buttons_stat_info_block_title{
+    font-size: 14px;
+}
+
+.mainForm_buttons_stat_info{
+    position: absolute;
+    top: 30px;
+    right: 0;
+    width: 300px;
+    height: fit-content;
+    border: 1px solid #cecece;
+    background-color: #fff;
+    border-radius: 10px;
+    z-index: 9;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .mainForm_buttons_btn {

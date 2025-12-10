@@ -704,14 +704,14 @@ function Request_page({ children, ...props }) {
     const [searchQuery, setSearchQuery] = useState('');
 
     let stateMap = {
+        "no_answer": "Нет ответа",
         "created": "Создан",
+        "waiting": "Ожидание",
         "in_progress": "В работе",
         "in_production": "В производстве",
         "closing_ready": "Закрывающие готовы",
         "waiting_payment": "Ждет оплаты",
         "paid": "Оплачен",
-        "waiting": "Ожидание",
-        "no_answer": "Нет ответа"
     };
 
     const stateClassMap = {
@@ -858,8 +858,39 @@ function Request_page({ children, ...props }) {
     const totalReq = requests.length;
     const totalCost = requests.reduce((sum, req) => sum + parseNumberRU(req.stoimostNumber), 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 10 });
 
+    const [isOpenInfoModal, setIsOpenInfoModal] = useState(false);
+    const modalRef = useRef(null);
 
-    // console.log(currentContract)
+    // Эффект для обработки клика вне блока
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (modalRef.current && !modalRef.current.contains(event.target)) {
+                setIsOpenInfoModal(false);
+            }
+        }
+
+        if (isOpenInfoModal) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpenInfoModal]);
+
+    function getCostByState(state) {
+        return requests.reduce((sum, req) =>
+            sum + (req.state == state ? (parseNumberRU(req.stoimostNumber) || 0) : 0),
+            0);
+    }
+
+    function getFormattedCostByState(state) {
+        const cost = getCostByState(state);
+        return cost.toLocaleString('ru-RU', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 10
+        });
+    }
     return (
         <div className={classes.main}>
             <div className={classes.mainForm}>
@@ -871,9 +902,32 @@ function Request_page({ children, ...props }) {
                     <div className={classes.mainForm_buttons_stat}>
                         Заявок: {totalReq} / 50
                     </div>
-                    <div className={classes.mainForm_buttons_stat}>
+                    <div className={classes.mainForm_buttons_stat}  ref={modalRef}>
                         Сумма: {totalCost} ₽ / 1 745 500 ₽
+
+                        <div className={classes.mainForm_buttons_stat_img}>
+                            <img src="info.png" alt="" onClick={() => { setIsOpenInfoModal(!isOpenInfoModal) }} />
+                        </div>
+
+                        {isOpenInfoModal && (
+                            <div className={classes.mainForm_buttons_stat_info}>
+                                {Object.entries(stateMap)
+                                    .filter(([state]) => getCostByState(state) > 0)
+                                    .map(([state, label]) => (
+                                        <div key={state} className={classes.mainForm_buttons_stat_info_block}>
+                                            <div className={classes.mainForm_buttons_stat_info_block_title}>
+                                                {label}
+                                            </div>
+                                            <div className={classes.mainForm_buttons_stat_info_block_sum}>
+                                                {getFormattedCostByState(state)}
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
                     </div>
+
+
 
                     <div className={classes.mainForm_buttons_search}>
                         <input
@@ -1065,24 +1119,24 @@ function Request_page({ children, ...props }) {
                     <h3>Выберите файл для скачивания:</h3>
                     <ul>
                         {filesToDownload
-                        .sort((a, b) => {
-                            const dateDiff = parseDateRU(b.creationDate) - parseDateRU(a.creationDate);
-                            if (dateDiff !== 0) return dateDiff;
-                            return b.filename.localeCompare(a.filename, 'ru');
-                        }).map((file, index) => (
-                            <li key={index} onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = `https://complexbackend.demoalazar.ru${file.filePath}`;
-                                link.download = '';
-                                link.click();
-                                // closeDownloadModal();
-                            }}>
-                                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                    <div>{file.filename} </div>
-                                    <div>{file.creationDate} г.</div>
-                                </div>
-                            </li>
-                        ))}
+                            .sort((a, b) => {
+                                const dateDiff = parseDateRU(b.creationDate) - parseDateRU(a.creationDate);
+                                if (dateDiff !== 0) return dateDiff;
+                                return b.filename.localeCompare(a.filename, 'ru');
+                            }).map((file, index) => (
+                                <li key={index} onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = `https://complexbackend.demoalazar.ru${file.filePath}`;
+                                    link.download = '';
+                                    link.click();
+                                    // closeDownloadModal();
+                                }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <div>{file.filename} </div>
+                                        <div>{file.creationDate} г.</div>
+                                    </div>
+                                </li>
+                            ))}
                     </ul>
                 </div>
             </Modal>
